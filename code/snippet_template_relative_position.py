@@ -112,6 +112,9 @@ class Templates:
 # Utils (possibly)
 
 def get_frontier_of_object_mass(grid, coordinates_list object_id):
+	"""
+	Blob created around the objects of same kind
+	"""
 	frontier = []
 	for coord in coordinates_list:
 		for d in [-1, 1]:
