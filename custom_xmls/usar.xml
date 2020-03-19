@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+      <About>
+        <Summary>Run the maze!</Summary>
+      </About>
+      
+     <ServerSection>
+        <ServerHandlers>
+            <FileWorldGenerator src="/Users/vidhijain/Malmo_zip/Minecraft/run/saves/Singleplayer_CMU_CRA" />
+            <ServerQuitFromTimeUp timeLimitMs="900000"/>
+            <ServerQuitWhenAnyAgentFinishes />
+        </ServerHandlers>
+    </ServerSection>
+
+    <AgentSection>
+        <Name>Thor</Name>
+        <AgentStart>
+            <Placement x="-2192" y="28" z="167"/> <!-- will be overwritten by MazeDecorator -->
+        </AgentStart>
+        <AgentHandlers>
+            <VideoProducer want_depth="false">
+                <Width>640</Width>
+                <Height>480</Height>
+            </VideoProducer>
+            <ContinuousMovementCommands turnSpeedDegs="720" />
+        </AgentHandlers>
+    </AgentSection>
+  </Mission>
