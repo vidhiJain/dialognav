@@ -6,6 +6,13 @@
       </About>
       
      <ServerSection>
+        <ServerInitialConditions>
+            <Time>
+                <StartTime>1000</StartTime>
+                <AllowPassageOfTime>false</AllowPassageOfTime>
+            </Time>
+            <Weather>clear</Weather>
+        </ServerInitialConditions>
         <ServerHandlers>
             <FileWorldGenerator src="/Users/vidhijain/Malmo_zip/Minecraft/run/saves/Singleplayer_CMU_CRA" />
             <ServerQuitFromTimeUp timeLimitMs="900000"/>
@@ -13,12 +20,22 @@
         </ServerHandlers>
     </ServerSection>
 
-    <AgentSection>
+    <AgentSection mode="Survival">
         <Name>Thor</Name>
         <AgentStart>
             <Placement x="-2192" y="28" z="167"/> <!-- will be overwritten by MazeDecorator -->
         </AgentStart>
         <AgentHandlers>
+            <ObservationFromFullStats />
+            <ObservationFromRay />
+<!--             <ObservationFromGrid>
+                <Grid
+                    name="relative_view"
+                    absoluteCoords="0"> 
+                    <min x="-21" y="-1" z="-1"/>
+                    <max x="1" y="-1" z="1"/>
+                </Grid>
+            </ObservationFromGrid> -->
             <VideoProducer want_depth="false">
                 <Width>640</Width>
                 <Height>480</Height>

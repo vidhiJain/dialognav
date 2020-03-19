@@ -47,7 +47,26 @@ def getMissionXML(mission_file):
 
     return mission_xml
 
+# def observe(agent_host):
+#     """
+#     Extracts the variables from observation to a dictionary 
+#     """
+#     blended_image = None
+#     world_state = agent_host.getWorldState()
+#     if world_state.number_of_observations_since_last_state > 0:
+#         timestamp = world_state.observations[-1].timestamp
+#         msg = world_state.observations[-1].text 
+#         obs = json.loads(msg)
+#         return {'timestamp': timestamp, 'observations': obs}
+
+
 def main():
+    sight= {'x': (-30, 30), 'z': (-30, 30), 'y':(-1, 1)}
+
+    range_x = abs(sight['x'][1] - sight['x'][0]) + 1
+    range_y = abs(sight['y'][1] - sight['y'][0]) + 1
+    range_z = abs(sight['z'][1] - sight['z'][0]) + 1
+
     malmoutils.fix_print()
     agent_host = MalmoPython.AgentHost()
     malmoutils.parse_command_line(agent_host)
@@ -68,7 +87,13 @@ def main():
     validate = True
     # my_mission = MalmoPython.MissionSpec(missionXML, validate)
     my_mission = MalmoPython.MissionSpec(getMissionXML(mission_xml_path), validate)
-    agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
+    
+    # ObservationFromGrid
+    my_mission.observeGrid(sight['x'][0], sight['y'][0], sight['z'][0], 
+        sight['x'][1], sight['y'][1], sight['z'][1], 'relative_view')
+    
+
+    # agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
     agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
 
     if agent_host.receivedArgument("test"):
@@ -89,7 +114,7 @@ def main():
         max_retries = 3
         for retry in range(max_retries):
             try:
-                agent_host.startMission( my_mission, my_mission_record )
+                agent_host.startMission(my_mission, my_mission_record )
                 break
             except RuntimeError as e:
                 if retry == max_retries - 1:
@@ -108,21 +133,38 @@ def main():
         print()
 
         img_counter = 0
-
+        # print('observations', world_state.observations)
         while world_state.is_mission_running:
             world_state = agent_host.getWorldState()
+
+            # Observations
+            # msg = observe(agent_host)
+            # if msg is not None:
+            #     print('timestamp: ', msg['timestamp'])
+
+            # NOTE : Nothing recorded in world state. Uncomment to test it out.
+            
+            # if world_state.number_of_observations_since_last_state > 0:
+            #     timestamp = world_state.observations[-1].timestamp
+            #     msg = world_state.observations[-1].text 
+            #     obs = json.loads(msg)
+            #     print("{'timestamp': timestamp, 'observations': obs}")
+           
+            # Video Frames
             while world_state.number_of_video_frames_since_last_state < 1 and world_state.is_mission_running:
                 logger.info("Waiting for frames...")
                 time.sleep(0.05)
                 world_state = agent_host.getWorldState()
 
             logger.info("Got frame!")
-            
+            # import ipdb; ipdb.set_trace
+            # print('observations', world_state.observations)
+            # world_state.observations
             if world_state.is_mission_running:
-                timestamp = world_state.observations[-1].timestamp
-                msg = world_state.observations[-1].text
-                print(timestamp)
-                print(msg)
+                # timestamp = world_state.observations[-1].timestamp
+                # msg = world_state.observations[-1].text
+                # print(timestamp)
+                # print(msg) 
                 frame = world_state.video_frames[-1]
                 img = Image.frombytes('RGB', (640,480), bytes(frame.pixels))
                 # imageio.imsave("./tmp_imgs/{}.png".format(img_counter), img)
