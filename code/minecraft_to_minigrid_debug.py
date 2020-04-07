@@ -751,6 +751,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--xmlfile", help="Mission XML file path", default='resource/usar_personal.xml')
     parser.add_argument("--tile_size", type=int, help="size at which to render tiles (min: 8, typical: 32)", default=8)
+    parser.add_argument("run", type=int, help="specify the run number for train/test data retrieval")
     args = parser.parse_args()
     debug = True
 
@@ -868,11 +869,11 @@ def main():
     # FOR DEBUG : variable "count" controls the loop iterations so that it doesn't run till the mission's end
     count =  500
 
-    env = gym.make('MiniGrid-NumpyMapMinecraftUSAR-v0')
+    # env = gym.make('MiniGrid-NumpyMapMinecraftUSAR-v0')
     # env = ViewSizeWrapper(env, agent_view_size=20)
 
-    env.reset()
-    env.render('rgb_array', args.tile_size)
+    # env.reset()
+    # env.render('rgb_array', args.tile_size)
     # print( agent.absolute_position, pz, px)
     while count and world_state.is_mission_running:
         print('count', count)
@@ -883,11 +884,11 @@ def main():
             print('agent_pos', nz, nx)
             image[1][nz][nx] = np.array([255, 0, 0], dtype='B')
             print('agent position', nz, nx)
-            env.agent_pos = [nx, nz]
-            env.grid.set(nx, nz, None)
+            # env.agent_pos = [nx, nz]
+            # env.grid.set(nx, nz, None)
             direction = int((agent.yaw/90 % 360 + 1) % 4)
             print('direction', direction)
-            env.agent_dir = direction
+            # env.agent_dir = direction
             frontier_list = agent.get_absolute_frontier_coordinates(agent.absolute_map)
             print('frontier_list', frontier_list)
             
@@ -896,24 +897,28 @@ def main():
             directional_frontiers_mask = agent.get_directional_frontiers_mask(nz, nx, frontier_list)
             print('directional_frontiers', directional_frontiers_mask)
             
-            mask = directional_frontiers_mask['north']
+            # mask = directional_frontiers_mask['north']
 
+            # frontier_list = agent.get_absolute_frontier_coordinates(episode_data['trajectory_map'])
+            # subset_frontier_matrix = .get_frontier_matrix(frontier_list, episode_data['directional_frontiers'][direction])
+        
 
             # TODO: change direction (4 discrete values: minigrid) 
             # with yaw (continuous values for 360 degrees): minecraft
-            np.savez('aggdirdata_{}'.format(count), 
+            np.savez('../train_data/run_{:03d}_count_{:03d}'.format(args.run, count), 
                 trajectory_map=agent.absolute_map, 
-                agent_dir=direction, 
+                agent_dir=direction,
+                frontier_coordinates=frontier_list,
                 directional_frontiers=directional_frontiers_mask)
 
-            import ipdb; ipdb.set_trace()
-            data = np.load('aggdirdata_{}.npz'.format(count))
-            print(data.files)
-            print(data['trajectory_map'])
+            # import ipdb; ipdb.set_trace()
+            # data = np.load('aggdirdata_{}.npz'.format(count))
+            # print(data.files)
+            # print(data['trajectory_map'])
 
-            directional_frontier_map = agent.get_masked_frontier_matrix(frontier_list, mask)
+            # directional_frontier_map = agent.get_masked_frontier_matrix(frontier_list, mask)
 
-            np.concatenate([minigrid_map, directional_frontier_map])
+            # np.concatenate([minigrid_map, directional_frontier_map])
 
             # path_matrix = agent.get_path_matrix((nz, nx), agent.absolute_map) 
             # # print('path_matrix', path_matrix)
@@ -939,15 +944,15 @@ def main():
             # print(frontier_description)
 
 
-            if  agent.lineOfSight['type']=='wool' and agent.lineOfSight['colour']=='WHITE':
-                # int(agent.lineOfSight['y'])==28.0 and
-                print('agent.lineOfSight', agent.lineOfSight['z'], agent.lineOfSight['x'])
-                i = int(agent.lineOfSight['z'] - agent.origin_coord['z'])
-                j = int(agent.lineOfSight['x'] - agent.origin_coord['x'])
-                print('########\ntriaged position', i, j)
-                env.put_obj(Goal('blue'), j, i)
+            # if  agent.lineOfSight['type']=='wool' and agent.lineOfSight['colour']=='WHITE':
+            #     # int(agent.lineOfSight['y'])==28.0 and
+            #     print('agent.lineOfSight', agent.lineOfSight['z'], agent.lineOfSight['x'])
+            #     i = int(agent.lineOfSight['z'] - agent.origin_coord['z'])
+            #     j = int(agent.lineOfSight['x'] - agent.origin_coord['x'])
+            #     print('########\ntriaged position', i, j)
+            #     env.put_obj(Goal('blue'), j, i)
 
-            time.sleep(.1)
+            time.sleep(.5)
 
         count -= 1
 
