@@ -76,7 +76,7 @@ def main(args):
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
         start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
             transforms.ToTensor()]))
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
     # data_iter = iter(dataset)
@@ -87,8 +87,8 @@ def main(args):
     # X_train = []
     # Y_train = []
 
-    model = Network(args.lr)
-    model.to(DEVICE)
+    model = Network()
+    model.to(device)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     
@@ -98,7 +98,7 @@ def main(args):
     accuracy_arr = []
     recall_arr = []
     precision_arr = []
-    for epoch in num_epochs:
+    for epoch in range(num_epochs):
         epoch_loss = 0.
         num_batches = 0
         epoch_recall = 0

@@ -14,7 +14,7 @@ class Network(nn.Module):
         '''
         super(Network, self).__init__()
 
-        self.encoder_map = nn.Sequential(
+        self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=input_channels, out_channels=16, kernel_size=3, stride=1), #48
             nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=2, stride=2), #24
