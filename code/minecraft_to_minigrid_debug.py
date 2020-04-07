@@ -898,9 +898,21 @@ def main():
             
             mask = directional_frontiers_mask['north']
 
-            directional_frontier_map = agent.get_masked_frontier_matrix(frontier_list, mask)
+
+            # TODO: change direction (4 discrete values: minigrid) 
+            # with yaw (continuous values for 360 degrees): minecraft
+            np.savez('aggdirdata_{}'.format(count), 
+                trajectory_map=agent.absolute_map, 
+                agent_dir=direction, 
+                directional_frontiers=directional_frontiers_mask)
 
             import ipdb; ipdb.set_trace()
+            data = np.load('aggdirdata_{}.npz'.format(count))
+            print(data.files)
+            print(data['trajectory_map'])
+
+            directional_frontier_map = agent.get_masked_frontier_matrix(frontier_list, mask)
+
             np.concatenate([minigrid_map, directional_frontier_map])
 
             # path_matrix = agent.get_path_matrix((nz, nx), agent.absolute_map) 
@@ -926,7 +938,7 @@ def main():
 
             # print(frontier_description)
 
-            
+
             if  agent.lineOfSight['type']=='wool' and agent.lineOfSight['colour']=='WHITE':
                 # int(agent.lineOfSight['y'])==28.0 and
                 print('agent.lineOfSight', agent.lineOfSight['z'], agent.lineOfSight['x'])
