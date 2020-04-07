@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
-import utils
+import utils.searchutils
+import utils.search
 
 import gym
 import gym_minigrid
@@ -179,6 +180,24 @@ class PlanningAgent():
         self.origin_coord = {'y': 27.0, 'z': 142.5, 'x': -2190.5}
 
         self.maze_map_dict = {}
+
+    def get_masked_frontier_matrix(self, frontier_list, mask):
+        frontier_map = np.zeros((self.envsize, self.envsize)) 
+        # Z = len(frontier_list)
+        for idx, coord in enumerate(frontier_list):
+            if mask[idx]:
+            # For now all frontiers are equally likely
+                frontier_map[coord[0]][coord[1]] = 1.
+        return frontier_map
+
+
+    def get_directional_frontiers_mask(self, agent_pos_z, agent_pos_x, frontier_list):
+        rel_frontiers = np.array(frontier_list) - np.array([agent_pos_z, agent_pos_x]).reshape(1, 2)
+        east = np.where(rel_frontiers[:, 1] >= 0, 1, 0)
+        west = np.where(rel_frontiers[:, 1] <= 0, 1, 0)
+        north = np.where(rel_frontiers[:, 0] <= 0, 1, 0)
+        south = np.where(rel_frontiers[:, 0] >= 0, 1, 0)
+        return {'south' : south, 'west' : west, 'north' : north, 'east' : east}
 
 
     def is_opaque(self, item):
@@ -871,30 +890,43 @@ def main():
             env.agent_dir = direction
             frontier_list = agent.get_absolute_frontier_coordinates(agent.absolute_map)
             print('frontier_list', frontier_list)
-            frontier_map = agent.get_frontier_matrix(frontier_list)
-
-            path_matrix = agent.get_path_matrix((nz, nx), agent.absolute_map) 
-            # print('path_matrix', path_matrix)
-            frontier_path_len = agent.get_frontier_path_length(path_matrix, frontier_list)
-            print('frontier_path_len', frontier_path_len)
-            # import ipdb; ipdb.set_trace()
-            intent_likelihood = agent.get_intent_likelihood([nz, nx], frontier_list, frontier_path_len, agent.yaw)
-            print('intent_likelihood', intent_likelihood)
-            # TODO: replace frontier map with intent likelihood
-            intent_matrix = agent.get_intent_matrix(frontier_list, intent_likelihood)
-            # print('intent_matrix', intent_matrix)
             
-            most_likely_frontier_index = np.array(intent_likelihood).argmax()
-            coord = frontier_list[most_likely_frontier_index]
-            frontier_description = "Most likely frontier is {} at {} with score={:.3f}".format(
-                agent.index_to_object[agent.absolute_map[1, coord[0], coord[1]]],
-                coord, 
-                intent_likelihood[most_likely_frontier_index])
+            minigrid_map = agent.aggregate_layerviews_for_minigrid()
+
+            directional_frontiers_mask = agent.get_directional_frontiers_mask(nz, nx, frontier_list)
+            print('directional_frontiers', directional_frontiers_mask)
+            
+            mask = directional_frontiers_mask['north']
+
+            directional_frontier_map = agent.get_masked_frontier_matrix(frontier_list, mask)
+
+            import ipdb; ipdb.set_trace()
+            np.concatenate([minigrid_map, directional_frontier_map])
+
+            # path_matrix = agent.get_path_matrix((nz, nx), agent.absolute_map) 
+            # # print('path_matrix', path_matrix)
+            # frontier_path_len = agent.get_frontier_path_length(path_matrix, frontier_list)
+            # print('frontier_path_len', frontier_path_len)
+            # # import ipdb; ipdb.set_trace()
+            # intent_likelihood = agent.get_intent_likelihood([nz, nx], frontier_list, frontier_path_len, agent.yaw)
+            # print('intent_likelihood', intent_likelihood)
+            # # TODO: replace frontier map with intent likelihood
+            # intent_matrix = agent.get_intent_matrix(frontier_list, intent_likelihood)
+            # # print('intent_matrix', intent_matrix)
+            
+            # most_likely_frontier_index = np.array(intent_likelihood).argmax()
+            # coord = frontier_list[most_likely_frontier_index]
+            # frontier_description = "Most likely frontier is {} at {} with score={:.3f}".format(
+            #     agent.index_to_object[agent.absolute_map[1, coord[0], coord[1]]],
+            #     coord, 
+            #     intent_likelihood[most_likely_frontier_index])
 
 
-            plot(env, image[1], intent_matrix, path_matrix, frontier_description)
+            # plot(env, image[1], intent_matrix, path_matrix, frontier_description)
 
-            print(frontier_description)
+            # print(frontier_description)
+
+            
             if  agent.lineOfSight['type']=='wool' and agent.lineOfSight['colour']=='WHITE':
                 # int(agent.lineOfSight['y'])==28.0 and
                 print('agent.lineOfSight', agent.lineOfSight['z'], agent.lineOfSight['x'])

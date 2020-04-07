@@ -14,6 +14,18 @@ from statistics import mean
 import numpy as np
 
 
+def dist_func(a, b, mode='l1'):
+    dist = 0
+    if mode == 'l2':
+        for t1, t2 in zip(a, b):
+            dist += (t1 - t2)**2
+        return np.sqrt(dist)
+    elif mode == 'l1':
+        for t1, t2 in zip(a, b):
+            dist += np.abs(t1 - t2)
+        return np.sqrt(dist)
+    else:
+        raise NotImplementedError
 # ______________________________________________________________________________
 # Functions on Sequences and Iterables
 
