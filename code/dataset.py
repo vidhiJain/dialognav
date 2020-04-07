@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 import numpy as np
-
+from tqdm import tqdm
 
 class DirectionalFrontiers(Dataset):
     """
@@ -25,6 +25,8 @@ class DirectionalFrontiers(Dataset):
             'north': 2,
             'west': 3,
         }
+
+        print('Loading data\n')
         self.data = self.retrieve_all_episodes()
 
 
@@ -70,31 +72,28 @@ class DirectionalFrontiers(Dataset):
             instruction = np.zeros((4))
             instruction[self.dir2num[direction]] =  1
 
-            trajectory_map = episode_data['trajectory_map'][1]
-            agent_dir = episode_data['agent_dir'] 
+            trajectory_map = episode_data['trajectory_map'][1].reshape(self.envsize, self.envsize, 1)
+            agent_dir = np.array([episode_data['agent_dir']])
+            # subset_frontier_matrix = subset_frontier_matrix.reshape(1, self.envsize, self.envsize)
             # import ipdb; ipdb.set_trace()
 
             if self.transform:
-                trajectory_map = self.transform(trajectory_map)
-                # agent_dir = self.transform(agent_dir)
-                # instruction = self.transform(instruction)
-                subset_frontier_matrix = self.transform(subset_frontier_matrix)
+                trajectory_map = self.transform(trajectory_map).float()
+                agent_dir = torch.Tensor(agent_dir).float()
+                instruction = torch.Tensor(instruction).float()
+                subset_frontier_matrix = self.transform(subset_frontier_matrix).float()
 
-            return [
-                    trajectory_map, 
-                    agent_dir, 
-                    instruction, 
-                    subset_frontier_matrix
-                ]
+            return  (trajectory_map, agent_dir, instruction), subset_frontier_matrix
+                
         except FileNotFoundError:
-            print(f"{filename} does not exist")
+            # print(f"{filename} does not exist")
             pass
             return None
 
 
     def retrieve_all_counts(self, episode_num):
         data = []
-        for counter in range(1, self.max_count):
+        for counter in tqdm(range(1, self.max_count)):
             for direc in ['south', 'east', 'north', 'west']:
                 timestep_data = self.retrieve_episode_count_data(episode_num, counter, 'south')
                 if timestep_data is not None:

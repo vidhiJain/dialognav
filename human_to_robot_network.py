@@ -8,7 +8,7 @@ import sys
 
 class Network(nn.Module):
 
-    def __init__(self, input_channels=3):
+    def __init__(self, input_channels=1):
         '''
         input_image_dim = 50x50x1
         '''
@@ -30,7 +30,7 @@ class Network(nn.Module):
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(in_channels=100,out_channels=64, kernel_size=2, stride=2), #12
             nn.ReLU(),
-            nn.ConvTranspose2d(in_channels=128,out_channels=32, kernel_size=2, stride=2), #24
+            nn.ConvTranspose2d(in_channels=64,out_channels=32, kernel_size=2, stride=2), #24
             nn.ReLU(),
             nn.ConvTranspose2d(in_channels=32,out_channels=16, kernel_size=2, stride=2), #48
             nn.ReLU(),
@@ -44,10 +44,16 @@ class Network(nn.Module):
         x: (batch_size, channels, height, width)
             Each sample in the batch is one image
         '''
+        batch_size = x_map.size()[0]    
+        x_map = x_map.float()
+        agent_dir = agent_dir.float()
+        instr = instr.float()
+        # import ipdb; ipdb.set_trace()
         encoded_map = self.encoder(x_map)
-        encoded_map = encoded_map.view(-1,1)
+        encoded_map = encoded_map.view(batch_size, 100*6*6)
         concat_vec = torch.cat((encoded_map, instr, agent_dir),1)
         concat_vec = self.combine_embeddings(concat_vec)
-        fronteir_map = self.decoder(concat_vec)
+        concat_vec = concat_vec.view(batch_size, 100, 6, 6)
+        frontier_map = self.decoder(concat_vec)
 
         return frontier_map

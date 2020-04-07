@@ -29,7 +29,8 @@ def parse_args():
         help='number of epochs')
     parser.add_argument('--data-dir', dest='data_dir', type=str, default='./train_data', 
         help='path to data files')
-
+    parser.add_argument('--log-interval', dest='log_interval', type=int, default=10, 
+        help='Loss summary interval')
     return parser.parse_args()
 
 
@@ -76,7 +77,7 @@ def main(args):
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
         start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
             transforms.ToTensor()]))
-    # import ipdb; ipdb.set_trace()
+    
     dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
     # data_iter = iter(dataset)
@@ -103,27 +104,32 @@ def main(args):
         num_batches = 0
         epoch_recall = 0
         epoch_precision = 0
-        for batch_id, data in enumerate(dataloader):
+        for batch_id, ((trajectory_map, agent_dir, instruction), subset_frontier_matrix) in enumerate(dataloader):
         # for i in range(0,Y_train.shape[0], batch_size):
             # num_batches += 1
             # X = X_train[i:min(Y_train.shape[0],i+batch_size)]
             # Y = Y_train[i:min(Y_train.shape[0],i+batch_size)]
-            x_map = data[0].to(device)
-            agent_dir = data[1].to(device)
-            instruction = data[2].to(device)
-            target_map = data[3].to(device)
+            trajectory_map = trajectory_map.to(device)
+            agent_dir = agent_dir.to(device)
+            instruction = instruction.to(device)
+            target_map = subset_frontier_matrix.to(device)
 
-            output = model(x_map, agent_dir, instruction)
-            
-            loss = loss_fn(output, target)
+            output_map = model(trajectory_map, agent_dir, instruction)
+            # import ipdb; ipdb.set_trace()
+
+            loss = loss_fn(output_map, target_map)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             
+            if batch_id % args.log_interval == 0:
+                print('====> Epoch: {}, batch: {}, Train Average loss: {:.4f}'.format(
+          epoch, batch_id, loss))
+
             epoch_loss += loss.item()
             with torch.no_grad():
-                recall, precision = recall_prec(pred, Y_train)
+                recall, precision = recall_prec(output_map, target_map)
 
                 epoch_recall += recall.mean().item()
                 epoch_precision += precision.mean().item()
