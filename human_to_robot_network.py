@@ -8,7 +8,7 @@ import sys
 
 class Network(nn.Module):
 
-    def __init__(self, input_channels=3, lr=1e-3):
+    def __init__(self, input_channels=3):
         '''
         input_image_dim = 50x50x1
         '''

@@ -8,7 +8,7 @@ from datetime import datetime
 
 import torch 
 import torch.nn as nn
-import torch.utils.data as DataLoader
+from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 
 from human_to_robot_network import Network
