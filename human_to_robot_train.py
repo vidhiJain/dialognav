@@ -70,9 +70,8 @@ def recall_prec(preds, gt):
 def main(args):
     args = parse_args()
     ## data loader
-    
-    results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
-    make_dirs([results_dir])    
+    # results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
+    # make_dirs([results_dir])    
 
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
         start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
@@ -106,7 +105,7 @@ def main(args):
         epoch_precision = 0
         for batch_id, ((trajectory_map, agent_dir, instruction), subset_frontier_matrix) in enumerate(dataloader):
         # for i in range(0,Y_train.shape[0], batch_size):
-            # num_batches += 1
+            num_batches += 1
             # X = X_train[i:min(Y_train.shape[0],i+batch_size)]
             # Y = Y_train[i:min(Y_train.shape[0],i+batch_size)]
             trajectory_map = trajectory_map.to(device)
@@ -125,7 +124,7 @@ def main(args):
             
             if batch_id % args.log_interval == 0:
                 print('====> Epoch: {}, batch: {}, Train Average loss: {:.4f}'.format(
-          epoch, batch_id, loss))
+                    epoch, batch_id, loss))
 
             epoch_loss += loss.item()
             with torch.no_grad():
