@@ -38,7 +38,6 @@ class Network(nn.Module):
             nn.Sigmoid(),
             )
 
-
     
     def forward(self, x_map, agent_dir, instr):
         '''

@@ -8,15 +8,25 @@ import sys, os
 from human_to_robot_network import *
 from dataset import *
 from datatime import datetime
+from code.dataset import DirectionalFrontiers
+
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--lr', dest='lr', type=float, default=1e-3, help='learning rate')
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32, help='batch_size')
-    parser.add_argument('--num-epochs', dest='num_epochs', type=int, default=60, help='number of epochs')
+    parser.add_argument('--lr', dest='lr', type=float, default=1e-3, 
+        help='learning rate')
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32, 
+        help='batch_size')
+    parser.add_argument('--num-epochs', dest='num_epochs', type=int, default=60, 
+        help='number of epochs')
+    parser.add_argument('--data-dir', dest='data_dir', type=str, default='train_data', 
+        help='path to data files')
+
     return parser.parse_args()
+
 
 def plot_props(data, prop_namen, path):
     fig = plt.figure(figsize=(16,9))
@@ -26,10 +36,12 @@ def plot_props(data, prop_namen, path):
     plt.title("{}_vs_epochs".format(prop_name))
     plt.savefig(os.path.join(path,prop_name+".png"))
 
+
 def make_dirs(path_list):
     for path in path_list:
         if not os.path.exists():
             os.mkdir(path)
+
 
 def recall_prec(preds, gt):
     preds_ = (preds>0.5)
@@ -48,6 +60,7 @@ def recall_prec(preds, gt):
    
     return recall, precision
 
+
 def main(args):
     args = parse_args()
     ## data loader
@@ -55,7 +68,9 @@ def main(args):
     results_dir = os.path.join(os.cwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
     make_dirs([results_dir])    
 
-    dataset = dataset()
+    dataset = DirectionalFrontiers(root_dir=args.data_dir, 
+        start_episode_num=3, max_episodes=3, max_count=500)
+    dataloader = 
     data_iter = iter(dataset)
     num_epochs = args.num_epochs
     

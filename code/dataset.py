@@ -6,22 +6,28 @@ class DirectionalFrontiers(torch.utils.data):
     Input : trajectory map, agent direction
     Output: subset_frontier_map
     """
-    def __init__(self, root_dir, start_episode_num, max_episodes, max_count):
+    def __init__(self, root_dir, start_episode_num, 
+        max_episodes, max_count, transform=None):
+
         self.root_dir = root_dir
         self.start_episode_num = start_episode_num
         self.max_episodes = max_episodes
         self.max_count = max_count
-        self.num_directions = 4
+        self.transform = transform
 
+        self.num_directions = 4
         self.envsize = 50
 
         self.data = self.retrieve_all_episodes()
 
+
     def __len__(self):
         return len(self.data)
 
+
     def __getitem__(self, idx):
         return self.data[idx]
+
 
     def get_frontier_matrix(self, frontier_list, mask):
         frontier_map = np.zeros((self.envsize, self.envsize)) 
@@ -46,13 +52,27 @@ class DirectionalFrontiers(torch.utils.data):
 
             subset frontier map : 2D numpy array (envsize x envsize)
         """
-        episode_data = np.load(self.root_dir + '/run{}_count{}.npz'.format(episode_num, counter)) 
+        filename = self.root_dir + '/run{}_count{}.npz'.format(episode_num, counter)
+        episode_data = np.load(filename) 
         # frontier_list = self.get_absolute_frontier_coordinates(episode_data['trajectory_map'])
-        subset_frontier_matrix = self.get_frontier_matrix(episode_data['frontier_coordinates'], episode_data['directional_frontiers'][direction])
+        subset_frontier_matrix = self.get_frontier_matrix(episode_data['frontier_coordinates'], 
+            episode_data['directional_frontiers'][direction])
         # for mask in episode_data['directional_frontiers'][direction]:
         instruction = np.zeros((4))
         instruction[direction] =  1
-        return episode_data['trajectory_map'], episode_data['agent_dir'], instruction, subset_frontier_matrix
+
+        if self.transform:
+            episode_data['trajectory_map'] = self.transform(episode_data['trajectory_map'])
+            episode_data['agent_dir'] = self.transform(episode_data['agent_dir'])
+            instruction = self.transform(instruction)
+            subset_frontier_matrix = self.transform(subset_frontier_matrix)
+
+        return [
+                episode_data['trajectory_map'], 
+                episode_data['agent_dir'], 
+                instruction, 
+                subset_frontier_matrix
+            ]
 
 
     def retrieve_all_counts(self, episode_num):
