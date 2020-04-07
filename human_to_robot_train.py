@@ -5,8 +5,8 @@ import torch.nn as nn
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import sys, os
-from human_to_robot_network import *
-from dataset import *
+from human_to_robot_network import Network
+# from dataset import *
 from datatime import datetime
 from code.dataset import DirectionalFrontiers
 
@@ -83,7 +83,7 @@ def main(args):
     # X_train = []
     # Y_train = []
 
-    model = network(args.lr)
+    model = Network(args.lr)
     model.to(DEVICE)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
