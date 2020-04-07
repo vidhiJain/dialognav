@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 import sys, os
 from human_to_robot_network import Network
 # from dataset import *
-from datatime import datetime
+from datetime import datetime
 from code.dataset import DirectionalFrontiers
 
 import torch.utils.data.DataLoader as DataLoader
 import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -131,6 +132,7 @@ def main(args):
     plot_props(loss_arr, "loss", results_dir)
     plot_props(recall_arr, "recall", results_dir)
     plot_props(precision_arr, "precision", results_dir)
+
 
 if __name__ == "__main__":
     main(sys.argv)
