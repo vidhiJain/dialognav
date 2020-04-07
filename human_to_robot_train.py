@@ -34,7 +34,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def plot_props(data, prop_namen, path):
+def plot_props(data, prop_name, path):
     fig = plt.figure(figsize=(16,9))
     plt.plot(data)
     plt.xlabel("epochs")
@@ -71,8 +71,9 @@ def recall_prec(preds, gt):
 def main(args):
     args = parse_args()
     ## data loader
-    results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
-    make_dirs([results_dir])    
+    results_dir = os.path.join(os.getcwd(), "results")
+    curr_run_dir = os.path.join(results_dir, datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
+    make_dirs([results_dir, curr_run_dir])    
 
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
         start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
@@ -133,14 +134,13 @@ def main(args):
 
                 epoch_recall += recall.mean().item()
                 epoch_precision += precision.mean().item()
-
         
         loss_arr.append(epoch_loss/num_batches)
         recall_arr.append(epoch_recall / num_batches)
         precision_arr.append(epoch_precision/num_batches)
-    plot_props(loss_arr, "loss", results_dir)
-    plot_props(recall_arr, "recall", results_dir)
-    plot_props(precision_arr, "precision", results_dir)
+    plot_props(loss_arr, "loss", curr_run_dir)
+    plot_props(recall_arr, "recall", curr_run_dir)
+    plot_props(precision_arr, "precision", curr_run_dir)
 
 
 if __name__ == "__main__":
