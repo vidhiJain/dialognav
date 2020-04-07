@@ -1,5 +1,7 @@
 import torch
 from torch.utils.data import Dataset
+import numpy as np
+
 
 class DirectionalFrontiers(Dataset):
     """
@@ -52,7 +54,7 @@ class DirectionalFrontiers(Dataset):
 
             subset frontier map : 2D numpy array (envsize x envsize)
         """
-        filename = self.root_dir + '/run{}_count{}.npz'.format(episode_num, counter)
+        filename = self.root_dir + '/run_{:3d}_count_{:3d}.npz'.format(episode_num, counter)
         episode_data = np.load(filename) 
         # frontier_list = self.get_absolute_frontier_coordinates(episode_data['trajectory_map'])
         subset_frontier_matrix = self.get_frontier_matrix(episode_data['frontier_coordinates'], 
@@ -87,6 +89,6 @@ class DirectionalFrontiers(Dataset):
 
     def retrieve_all_episodes(self):
         data = []
-        for episode in range(self.max_episodes):
+        for episode in range(self.start_episode_num, self.max_episodes):
             data.append(self.retrieve_all_counts(episode))
         return data

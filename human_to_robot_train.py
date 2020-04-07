@@ -1,17 +1,19 @@
 import numpy as np
+import sys
 import os
-import torch 
-import torch.nn as nn
+import argparse
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import sys, os
-from human_to_robot_network import Network
-# from dataset import *
 from datetime import datetime
+
+import torch 
+import torch.nn as nn
+import torch.utils.data as DataLoader
+import torchvision.transforms as transforms
+
+from human_to_robot_network import Network
 from code.dataset import DirectionalFrontiers
 
-import torch.utils.data.DataLoader as DataLoader
-import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -42,7 +44,7 @@ def plot_props(data, prop_namen, path):
 
 def make_dirs(path_list):
     for path in path_list:
-        if not os.path.exists():
+        if not os.path.exists(path):
             os.mkdir(path)
 
 
@@ -68,7 +70,7 @@ def main(args):
     args = parse_args()
     ## data loader
     
-    results_dir = os.path.join(os.cwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
+    results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
     make_dirs([results_dir])    
 
     dataset = DirectionalFrontiers(root_dir=args.data_dir, 
