@@ -74,7 +74,8 @@ def main(args):
     make_dirs([results_dir])    
 
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
-        start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.ToTensor)
+        start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
+            transforms.ToTensor()]))
     import ipdb; ipdb.set_trace()
     dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
