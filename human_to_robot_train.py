@@ -50,14 +50,15 @@ def make_dirs(path_list):
 
 
 def recall_prec(preds, gt):
-    preds_ = (preds>0.5)
-    diff = preds - gt
+    preds_ = (preds>0.5).float()
+    # import ipdb; ipdb.set_trace()
+    diff = preds_ - gt
     
-    total_pos = torch.sum(preds, (1,2))
+    total_pos = torch.sum(preds_, (1,2))
     false_pos = torch.sum((diff==1), (1,2))
     true_pos = total_pos - false_pos
 
-    total_negs = torch.sum((1 - preds), (1,2))
+    total_negs = torch.sum((1 - preds_), (1,2))
     false_negs = torch.sum((diff==-1), (1,2))
     true_negs = total_negs - false_negs
 
@@ -70,8 +71,8 @@ def recall_prec(preds, gt):
 def main(args):
     args = parse_args()
     ## data loader
-    # results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
-    # make_dirs([results_dir])    
+    results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
+    make_dirs([results_dir])    
 
     train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
         start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.Compose([
