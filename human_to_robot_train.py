@@ -10,8 +10,10 @@ from dataset import *
 from datatime import datetime
 from code.dataset import DirectionalFrontiers
 
+import torch.utils.data.DataLoader as DataLoader
+import torchvision.transforms as transforms
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -69,15 +71,17 @@ def main(args):
     make_dirs([results_dir])    
 
     dataset = DirectionalFrontiers(root_dir=args.data_dir, 
-        start_episode_num=3, max_episodes=3, max_count=500)
-    dataloader = 
-    data_iter = iter(dataset)
+        start_episode_num=3, max_episodes=3, max_count=500, transform=transforms.ToTensor)
+    
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+
+    # data_iter = iter(dataset)
     num_epochs = args.num_epochs
     
-    batch_size = args.batch_size 
+    # batch_size = args.batch_size 
     
-    X_train = []
-    Y_train = []
+    # X_train = []
+    # Y_train = []
 
     model = network(args.lr)
     model.to(DEVICE)
@@ -95,14 +99,19 @@ def main(args):
         num_batches = 0
         epoch_recall = 0
         epoch_precision = 0
-        for i in range(0,Y_train.shape[0], batch_size):
-            num_batches += 1
-            X = X_train[i:min(Y_train.shape[0],i+batch_size)]
-            Y = Y_train[i:min(Y_train.shape[0],i+batch_size)]
+        for batch_id, data in enumerate(dataloader):
+        # for i in range(0,Y_train.shape[0], batch_size):
+            # num_batches += 1
+            # X = X_train[i:min(Y_train.shape[0],i+batch_size)]
+            # Y = Y_train[i:min(Y_train.shape[0],i+batch_size)]
+            x_map = data[0].to(device)
+            agent_dir = data[1].to(device)
+            instruction = data[2].to(device)
+            target_map = data[3].to(device)
 
-            pred = model(X_train)
+            output = model(x_map, agent_dir, instruction)
             
-            loss = loss_fn(pred, gt)
+            loss = loss_fn(output, target)
 
             optimizer.zero_grad()
             loss.backward()
