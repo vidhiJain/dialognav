@@ -5,4 +5,4 @@ __pycache__/
 */.DS_Store
 human_trajectories/*
 
-train_data/
+# train_data/

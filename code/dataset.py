@@ -54,32 +54,36 @@ class DirectionalFrontiers(Dataset):
 
             subset frontier map : 2D numpy array (envsize x envsize)
         """
-        filename = self.root_dir + '/run_{:3d}_count_{:3d}.npz'.format(episode_num, counter)
-        episode_data = np.load(filename) 
-        # frontier_list = self.get_absolute_frontier_coordinates(episode_data['trajectory_map'])
-        subset_frontier_matrix = self.get_frontier_matrix(episode_data['frontier_coordinates'], 
-            episode_data['directional_frontiers'][direction])
-        # for mask in episode_data['directional_frontiers'][direction]:
-        instruction = np.zeros((4))
-        instruction[direction] =  1
+        filename = self.root_dir + '/run_{:03d}_count_{:03d}.npz'.format(episode_num, counter)
+        try:
+            episode_data = np.load(filename, allow_pickle=True) 
+            # import ipdb; ipdb.set_trace()
+            # frontier_list = self.get_absolute_frontier_coordinates(episode_data['trajectory_map'])
+            subset_frontier_matrix = self.get_frontier_matrix(episode_data['frontier_coordinates'], 
+                episode_data['directional_frontiers'].item()[direction])
+            # for mask in episode_data['directional_frontiers'][direction]:
+            instruction = np.zeros((4))
+            instruction[direction] =  1
 
-        if self.transform:
-            episode_data['trajectory_map'] = self.transform(episode_data['trajectory_map'])
-            episode_data['agent_dir'] = self.transform(episode_data['agent_dir'])
-            instruction = self.transform(instruction)
-            subset_frontier_matrix = self.transform(subset_frontier_matrix)
+            if self.transform:
+                episode_data['trajectory_map'] = self.transform(episode_data['trajectory_map'])
+                episode_data['agent_dir'] = self.transform(episode_data['agent_dir'])
+                instruction = self.transform(instruction)
+                subset_frontier_matrix = self.transform(subset_frontier_matrix)
 
-        return [
-                episode_data['trajectory_map'], 
-                episode_data['agent_dir'], 
-                instruction, 
-                subset_frontier_matrix
-            ]
-
+            return [
+                    episode_data['trajectory_map'], 
+                    episode_data['agent_dir'], 
+                    instruction, 
+                    subset_frontier_matrix
+                ]
+        except FileNotFoundError:
+            print(f"{filename} does not exist")
+            pass
 
     def retrieve_all_counts(self, episode_num):
         data = []
-        for counter in range(self.max_count):
+        for counter in range(1, self.max_count):
             data.append(self.retrieve_episode_count_data(episode_num, counter, 'south'))
             data.append(self.retrieve_episode_count_data(episode_num, counter, 'east'))
             data.append(self.retrieve_episode_count_data(episode_num, counter, 'north'))
@@ -89,6 +93,6 @@ class DirectionalFrontiers(Dataset):
 
     def retrieve_all_episodes(self):
         data = []
-        for episode in range(self.start_episode_num, self.max_episodes):
+        for episode in range(self.start_episode_num, self.max_episodes + self.start_episode_num):
             data.append(self.retrieve_all_counts(episode))
         return data

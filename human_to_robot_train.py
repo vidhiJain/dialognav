@@ -27,7 +27,7 @@ def parse_args():
         help='batch_size')
     parser.add_argument('--num-epochs', dest='num_epochs', type=int, default=60, 
         help='number of epochs')
-    parser.add_argument('--data-dir', dest='data_dir', type=str, default='train_data', 
+    parser.add_argument('--data-dir', dest='data_dir', type=str, default='./train_data', 
         help='path to data files')
 
     return parser.parse_args()
@@ -73,10 +73,10 @@ def main(args):
     results_dir = os.path.join(os.getcwd(), datetime.now().strftime("%Y-%m-%d_%I-%M-%S_%p"))
     make_dirs([results_dir])    
 
-    dataset = DirectionalFrontiers(root_dir=args.data_dir, 
-        start_episode_num=3, max_episodes=3, max_count=500, transform=transforms.ToTensor)
-    
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    train_dataset = DirectionalFrontiers(root_dir=args.data_dir, 
+        start_episode_num=3, max_episodes=1, max_count=500, transform=transforms.ToTensor)
+    import ipdb; ipdb.set_trace()
+    dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
     # data_iter = iter(dataset)
     num_epochs = args.num_epochs
