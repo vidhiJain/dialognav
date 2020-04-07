@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 
-class DirectionalFrontiers(torch.utils.data):
+class DirectionalFrontiers(Dataset):
     """
     Input : trajectory map, agent direction
     Output: subset_frontier_map
