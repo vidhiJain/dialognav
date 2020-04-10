@@ -54,12 +54,12 @@ def recall_prec(preds, gt):
     # import ipdb; ipdb.set_trace()
     diff = preds_ - gt
     
-    total_pos = torch.sum(preds_, (1,2))
-    false_pos = torch.sum((diff==1), (1,2))
+    total_pos = torch.sum(preds_, (1,2,3))
+    false_pos = torch.sum((diff==1), (1,2,3))
     true_pos = total_pos - false_pos
 
-    total_negs = torch.sum((1 - preds_), (1,2))
-    false_negs = torch.sum((diff==-1), (1,2))
+    total_negs = torch.sum((1 - preds_), (1,2,3))
+    false_negs = torch.sum((diff==-1), (1,2,3))
     true_negs = total_negs - false_negs
 
     recall = (true_pos) / (true_pos + false_negs)
@@ -81,13 +81,8 @@ def main(args):
     
     dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
-    # data_iter = iter(dataset)
     num_epochs = args.num_epochs
     
-    # batch_size = args.batch_size 
-    
-    # X_train = []
-    # Y_train = []
 
     model = Network()
     model.to(device)
@@ -124,9 +119,6 @@ def main(args):
             loss.backward()
             optimizer.step()
             
-            if batch_id % args.log_interval == 0:
-                print('====> Epoch: {}, batch: {}, Train Average loss: {:.4f}'.format(
-                    epoch, batch_id, loss))
 
             epoch_loss += loss.item()
             with torch.no_grad():
@@ -134,6 +126,10 @@ def main(args):
 
                 epoch_recall += recall.mean().item()
                 epoch_precision += precision.mean().item()
+            
+            if batch_id % args.log_interval == 0:
+                print('====> Epoch: {}, batch: {}, Train Average loss: {:.4f}, recall: {:.4f}, precision: {:.4f}'.format(
+                    epoch, batch_id, loss, recall.mean().item(), precision.mean().item()))
         
         loss_arr.append(epoch_loss/num_batches)
         recall_arr.append(epoch_recall / num_batches)
