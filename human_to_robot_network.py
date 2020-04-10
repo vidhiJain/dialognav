@@ -16,23 +16,32 @@ class Network(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=input_channels, out_channels=16, kernel_size=3, stride=1), #48
+            nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=2, stride=2), #24
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=2, stride=2), #12
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(in_channels=64, out_channels=100, kernel_size=2, stride=2), #6
             nn.ReLU(),
             )
 
-        self.combine_embeddings = nn.Linear(in_features=(6*6*100)+5, out_features=(6*6*100))
+        self.combine_embeddings = nn.Sequential(
+                                                nn.Linear(in_features=(6*6*100)+5, out_features=(6*6*100)),
+                                                nn.BatchNorm1d(6*6*100),
+                                                )
         
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(in_channels=100,out_channels=64, kernel_size=2, stride=2), #12
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.ConvTranspose2d(in_channels=64,out_channels=32, kernel_size=2, stride=2), #24
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.ConvTranspose2d(in_channels=32,out_channels=16, kernel_size=2, stride=2), #48
+            nn.BatchNorm2d(16),
             nn.ReLU(),
             nn.ConvTranspose2d(in_channels=16,out_channels=1, kernel_size=3, stride=1), #50
             nn.Sigmoid(),

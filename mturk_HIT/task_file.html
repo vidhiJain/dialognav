@@ -1,0 +1,137 @@
+<!-- You must include this JavaScript file -->
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+
+<!-- For the full list of available Crowd HTML Elements and their input/output documentation,
+      please refer to https://docs.aws.amazon.com/sagemaker/latest/dg/sms-ui-template-reference.html -->
+
+<!-- You must include crowd-form so that your task submits answers to MTurk -->
+<crowd-form answer-format="flatten-objects">
+    <crowd-instructions link-text="Check the instructions before starting the task" link-type="button">
+        <short-summary>
+            <p>
+                Give images from the minecraft video game, provide image descriptions based on the objects of interest given in the detailed instructions.
+                Do check out the examples before starting the task.
+                You will be asked to provide a natural language response, and a template based response to the image.
+            </p>
+        </short-summary>
+        
+        <detailed-instructions>
+
+            <h3>
+                Minecraft gameplay video
+            </h3>
+            <video width="640" height="480" controls>
+              <source src="https://visdial.s3.us-east-2.amazonaws.com/instructions/gamplay_video.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <h3>
+                Objects of interest
+            </h3>
+        <!--<iframe src="https://drive.google.com/file/d/12cdBrdBafvWnWWcIg2ZFTsq-WFjN9-wX/preview" width="640" height="480"></iframe>-->
+        <table align="center" border=1>
+           <thead>
+               <tr>
+                 <th rowspan="2">Object Name</th>
+                 <th rowspan="2">Object example image</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Fire</td>
+                    <td align="center"><img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/fire.png"/></td>
+                </tr>
+                <tr>
+                    <td>Door</td>
+                    <td align="center"><img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/door_closed.png"/></td>
+                </tr>
+                <tr>
+                    <td>Victims</td>
+                    <td align ="center">
+                        <img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/victim_blue.png"/><br>
+                        <img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/victim_red.png"/><br>
+                        <img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/victim_green.png" width:"150%" height:"150%"/><br>
+                        <img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/victim_white.png"/><br>
+                        <img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/victim_orange.png"/><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Lever</td>
+                    <td align ="center"><img src="https://visdial.s3.us-east-2.amazonaws.com/instructions/lever.png"/></td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>
+            Response types:
+        </h3>
+        <p>
+            The natural language based response can be as detailed as you want them to be, but do not mention that you are describing an image.
+        </p>
+        <p>
+             For the template based response follow the given templates:
+        </p>
+        </detailed-instructions>
+        <positive-example>
+            <img src="https://visdial.s3.us-east-2.amazonaws.com/data/trajectory_frames/2020-03-17_11-25-43_PM_frame_112.png" height:"75%" width:"75%"/>
+            <p>
+                Natural language response: There is a red victim in front of me, surrounded by obstacles.
+            </p>
+            <p>
+                Template response: red_victim_in_front_of_me
+            </p>
+        </positive-example>
+    </crowd-instructions>
+<crowd-image-classifier-multi-select
+    src="https://visdial.s3.us-east-2.amazonaws.com/data/trajectory_frames/${image_url}" style="max-width: 100%; max-height: 100%"
+    name="category"
+    categories="['Door', 'Victim', 'Fire', 'Shovel', 'Lever']"
+    header="Use this Menu to describe the image"
+  >
+
+        <!--Use the short-instructions section for quick instructions that the Worker-->
+        <!--      will see while working on the task. Including some basic examples of -->
+        <!--      good and bad answers here can help get good results. You can include -->
+        <!--      any HTML here. -->-->
+        
+  <!--       <short-instructions>-->
+  <!--    Provide a description of the image-->
+  <!--       </short-instructions>-->
+
+  <!--   Use the full-instructions section for more detailed instructions that the -->
+  <!--        Worker can open while working on the task. Including more detailed -->
+  <!--        instructions and additional examples of good and bad answers here can-->
+  <!--        help get good results. You can include any HTML here. -->-->
+  <!--  <full-instructions header="Image Moderation Instructions">-->
+  <!--    <h2>Detailed Instructions</h2>-->
+  <!--    <p>Describe the current scene based on the given objects of interest</p> -->
+  <!--    <ol>-->
+  <!--      <li>Begin by carefully examining the entire image</li>-->
+  <!--      <li>Next determine if the image contains any object of interest</li>-->
+  <!--      <li>If the image contains any of the objects of interest, select the appropriate category: 'Door', 'Victim', 'Fire', 'Shovel', 'Lever'-->
+  <!--      </li>-->
+  <!--      <li> If it does not contain any of the above objects, give a negative response </li> -->
+  <!--    </ol>-->
+  <!--  </full-instructions>-->
+
+  <!--</crowd-image-classifier>-->
+  <!--  <p>-->
+  <!--    <strong>Instructions: </strong>-->
+<!--      Please go through these instructions before starting the task.-->
+
+<!--You will be given an image from the first person view of someone's gameplay of Minecraft video game, and you have to search for objects of interest from the list given in the link below and then describe the relative location of the objects of interest present in the scene relative to each other and relative to the player (given it is a first person view).-->
+<!--Please check the instructions,and the list of objects of interest at the link below:-->
+<!--    </p>-->
+<!--    <a>-->
+<!--        https://tinyurl.com/vvt8r7p-->
+<!--    </a>-->
+
+
+    <!-- Your image file URLs will be substituted for the "image_url" variable below 
+          when you publish a batch with a CSV input file containing multiple image file URLs.
+          To preview the element with an example image, try setting the src attribute to
+          "https://s3.amazonaws.com/cv-demo-images/basketball-outdoor.jpg" -->
+    <p><img src="https://visdial.s3.us-east-2.amazonaws.com/${image_url}" style="max-width: 100%; max-height: 100%" /></p>
+    <crowd-input label="Template form description" name="template" required></crowd-input>
+    <crowd-input label="Natural language description" name="natural_language" required></crowd-input>
+  </crowd-image-classifier>
+
+</crowd-form>
