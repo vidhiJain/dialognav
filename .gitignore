@@ -1,0 +1,13 @@
+# .gitignore
+__pycache__/
+*/__pycache__/
+.DS_Store
+*/.DS_Store
+human_trajectories/*
+results/
+train_data/
+saved_data/
+env/
+.travis.yml
+*.swp
+
