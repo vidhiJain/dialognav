@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+      <About>
+        <Summary>Run the maze!</Summary>
+      </About>
+      
+     <ServerSection>
+        <ServerHandlers>
+		<FileWorldGenerator src="/home/akshay/Desktop/Research/visdial_malmo/malmo_037_py36_zip/Minecraft/run/saves/single_player_mission_v3" />
+            <ServerQuitFromTimeUp timeLimitMs="3000000"/>
+            <ServerQuitWhenAnyAgentFinishes />
+        </ServerHandlers>
+    </ServerSection>
+
+    <AgentSection>
+        <Name>Thor</Name>
+        <AgentStart>
+            <Placement x="-2098" y="61" z="148" yaw="-90" pitch="9"/> <!-- will be overwritten by MazeDecorator -->
+        </AgentStart>
+	<AgentHandlers>
+	  <ObservationFromFullStats/>
+	  <ObservationFromGrid>
+	      <Grid name="floor13x13">
+		<min x="-6" y="0" z="-6"/>
+		<max x="6" y="0" z="6"/>
+	      </Grid>
+	  </ObservationFromGrid>
+            <VideoProducer want_depth="false">
+                <Width>640</Width>
+                <Height>480</Height>
+            </VideoProducer>
+	    <ContinuousMovementCommands/>
+            <!--<DiscreteMovementCommands/>-->
+            <AgentQuitFromTouchingBlockType>
+                <Block type="redstone_block"/>
+            </AgentQuitFromTouchingBlockType>
+        </AgentHandlers>
+    </AgentSection>
+  </Mission>
