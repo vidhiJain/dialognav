@@ -23,7 +23,7 @@ class astar_planner:
         2 : frontiers to explore
         3 : current position.
         """
-        self.worldMap = obs['image'][:,:,0]
+        self.worldMap = obs['image_full'][:,:,0]
         self.rows = self.worldMap.shape[0] 
         self.cols = self.worldMap.shape[1]
         self.openList = PriorityQueue()
@@ -220,10 +220,10 @@ class astar_planner:
 
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
-        self.worldMap = obs['image'][:,:,0]
+        self.worldMap = obs['image_full'][:,:,0]
         return
 
-    def Act(self, goal, obs=None, yaw =0, action_type="minigrid"):
+    def Act(self, goal, obs=None, yaw=0, action_type="minigrid"):
         #if partial observable, integrate the current map.
         if(action_type=="malmo"):
             if(obs['direction']==0):

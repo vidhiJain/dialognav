@@ -9,7 +9,7 @@ from gym_minigrid.wrappers import *
 from gym_minigrid.window import Window
 
 from gym_minigrid.minigrid import *
-from visdial import planner
+import planner
 import pdb
 def redraw(img):
     if not args.agent_view:
@@ -27,7 +27,7 @@ def reset():
         print('Mission: %s' % env.mission)
         window.set_caption(env.mission)
 
-    redraw(obs)
+    redraw(obs['image'])
 
 def step(action):
     obs, reward, done, info = env.step(action)
@@ -38,7 +38,7 @@ def step(action):
         reset()
         # env.put_obj(Goal('blue'), env.agent_pos[0], env.agent_pos[1])
     else:
-        redraw(obs)
+        redraw(obs['image'])
 
 def key_handler(event):
     # print('pressed', event.key)
@@ -104,8 +104,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 env = gym.make(args.env)
-# env = HumanFOVWrapper(env)
-env = FullyObsWrapper(env)
+env = VisdialWrapper(env)
+# env = FullyObsWrapper(env)
 obs = env.reset()
 agent = planner.astar_planner(obs)
 # env = gym.wrappers.Monitor(env, "recording")
@@ -162,12 +162,12 @@ def follow_nav_command(text, agent, obs):
         return response
     while len(actionList):
         action = actionList.pop()
+        print(action)
         obs, reward, done, info = env.step(action)
         # env.render()
     
     response += " reached"
     return response 
-
 
 def get_dialog_type(text):
     dialog_type = ""
@@ -255,7 +255,6 @@ def find_objects(grid, visibility_mask, observed_mask):
 
     return observed_objects, visible_objects
 
-
 def gen_response(dialog_type):
     print("gen_response - dialog_type :", dialog_type)
     ans = ""
@@ -309,11 +308,11 @@ def gen_response(dialog_type):
                 if "4" in dialog_type:
                     if len(visible_objects["victim"]) == 0:
                         return "No victim is visible."
-                    coords = [obs[0] for obs in visible_objects["victim"]]
+                    coords = [ob[0] for ob in visible_objects["victim"]]
                 else:
                     if len(observed_objects["victim"]) == 0:
                         return "No victims discovered yet!"
-                    coords = [obs[0] for obs in observed_objects["victim"]]
+                    coords = [ob[0] for ob in observed_objects["victim"]]
                 rno = np.random.randint(0, 3)
                 coords = ["({}, {})".format(x, y) for x, y in coords]
                 if rno == 0:
@@ -412,11 +411,11 @@ def gen_response(dialog_type):
             if "4" in dialog_type:
                 if len(visible_objects["door"]) == 0:
                     return "No door is visible."
-                coords = [obs[0] for obs in visible_objects["door"]]
+                coords = [ob[0] for ob in visible_objects["door"]]
             else:
                 if len(observed_objects["door"]) == 0:
                     return "No doors discovered yet!"
-                coords = [obs[0] for obs in observed_objects["door"]]
+                coords = [ob[0] for ob in observed_objects["door"]]
             rno = np.random.randint(0, 3)
             coords = ["({}, {}),".format(x, y) for x, y in coords]
             if rno == 0:
@@ -481,11 +480,11 @@ def gen_response(dialog_type):
             if "4" in dialog_type:
                 if len(visible_objects["key"]) == 0:
                     return "No key is visible."
-                coords = [obs[0] for obs in visible_objects["key"]]
+                coords = [ob[0] for ob in visible_objects["key"]]
             else:
                 if len(observed_objects["key"]) == 0:
                     return "No keys discovered yet!"
-                coords = [obs[0] for obs in observed_objects["key"]]
+                coords = [ob[0] for ob in observed_objects["key"]]
             rno = np.random.randint(0, 3)
             coords = ["({}, {}),".format(x, y) for x, y in coords]
             if rno == 0:
@@ -509,7 +508,7 @@ def gen_response(dialog_type):
         else:
             ans = "Can not answer!"
     return ans
-                
+
 def dialog_register():
     while True:
         ip = input(">> ").lower().strip()
