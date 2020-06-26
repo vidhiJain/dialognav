@@ -23,7 +23,7 @@ class astar_planner:
         2 : frontiers to explore
         3 : current position.
         """
-        self.worldMap = obs['image_full'][:,:,0]
+        self.worldMap = obs['image'][:,:,0]
         self.rows = self.worldMap.shape[0] 
         self.cols = self.worldMap.shape[1]
         self.openList = PriorityQueue()
@@ -45,7 +45,6 @@ class astar_planner:
 
     def CalculatePath(self, goal):
         #set paraneters of start and possible goal positions.
-        pdb.set_trace()
         self.startPos = np.where(self.worldMap==10)
         self.startNode = Node(self.startPos[0][0], self.startPos[1][0])
         self.startNode.g = 0
@@ -220,10 +219,10 @@ class astar_planner:
 
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
-        self.worldMap = obs['image_full'][:,:,0]
+        self.worldMap = obs['image'][:,:,0]
         return
 
-    def Act(self, goal, obs=None, yaw=0, action_type="minigrid"):
+    def Act(self, goal, obs=None, yaw =0, action_type="minigrid"):
         #if partial observable, integrate the current map.
         if(action_type=="malmo"):
             if(obs['direction']==0):
@@ -244,9 +243,7 @@ class astar_planner:
             self.openList = PriorityQueue()
             self.openNodesList = {}
             path = self.CalculatePath(goal)
-            if(len(path)==0):
-                print("The object does not exist in the environment")
-            print("path: {}".format(path))
+            print(path)
             self.steps = 0
             if(action_type=="minigrid"):
                 self.actionList = self.PathToAction(path, obs['direction'])
@@ -257,9 +254,8 @@ class astar_planner:
 
         #once we have a plan
         self.steps += 1
-
-        # return self.actionList.pop()
         return self.actionList
+        # return self.actionList.pop()
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
