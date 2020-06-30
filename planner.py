@@ -108,12 +108,12 @@ class astar_planner:
         action_list = []
         if(len(path)==0):
             return action_list
-        dest_pos = path.pop()
+        curr_pos = path.pop()
         # goal_position = get_state_coord(solution_path.pop(0))
         while len(path) != 0:
-            curr_pos = path.pop()
-            diff_z = dest_pos[0] - curr_pos[0]
-            diff_x = dest_pos[1] - curr_pos[1]
+            dest_pos = path.pop()
+            diff_x = dest_pos[0] - curr_pos[0]
+            diff_z = dest_pos[1] - curr_pos[1]
             if diff_z == 1:
                 dest_yaw = 270
                 if(curr_yaw!=dest_yaw):
@@ -140,7 +140,7 @@ class astar_planner:
                 action_list.append("movenorth 1")
             else:
                 pass
-            dest_pos = curr_pos*1
+            curr_pos = dest_pos*1
         return action_list
 
     def get_turn_actions(self,curr_yaw, dest_yaw):

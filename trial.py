@@ -9,9 +9,9 @@ import planner
 import pdb
 
 #making the environment.
-# env = gym.make('MiniGrid-MultiRoom-N6-v0')
+env = gym.make('MiniGrid-MultiRoom-N6-v0')
 # env = gym.make('MiniGrid-NumpyMap-v0')
-env = gym.make('MiniGrid-MinimapForSparky-v0')
+# env = gym.make('MiniGrid-MinimapForSparky-v0')
 # env = RGBImgPartialObsWrapper(env)
 
 # env = wrappers.FullyObsWrapper(env)
