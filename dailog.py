@@ -40,11 +40,7 @@ def follow_nav_command(text, planner, observations, env, window):
         goal = 5
         response = "key"
 
-    obs = {
-        "direction": observations['direction'],
-        "image": observations['image_full']
-    }
-    actionList = planner.Act(obs=obs, goal=goal, action_type="minigrid")
+    actionList = planner.Act(obs=observations, goal=goal, action_type="minigrid")
     
     if(len(actionList)==0):
         response += " does not exist in the current env"

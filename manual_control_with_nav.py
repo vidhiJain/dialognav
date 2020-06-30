@@ -28,7 +28,7 @@ def reset():
         print('Mission: %s' % env.mission)
         window.set_caption(env.mission)
 
-    redraw(obs['image'])
+    redraw(obs['image_fov'])
 
 def step(action):
     obs, reward, done, info = env.step(action)
@@ -39,7 +39,7 @@ def step(action):
         reset()
         # env.put_obj(Goal('blue'), env.agent_pos[0], env.agent_pos[1])
     else:
-        redraw(obs)
+        redraw(obs['image_fov'])
 
 def key_handler(event):
     # print('pressed', event.key)
@@ -127,7 +127,6 @@ window.show(block=False)
 def start_dialog(env, window=None):
     observations = env.reset()
     obs = env.reset()
-    obs = {"direction": observations['direction'], "image": observations['image_full']}
 
     action_planner = planner.astar_planner(obs)
 
