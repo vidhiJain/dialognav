@@ -24,6 +24,7 @@ class astar_planner:
         3 : current position.
         """
         self.worldMap = obs['image'][:,:,0]
+        self.state = obs['image'][:,:,2]
         self.rows = self.worldMap.shape[0] 
         self.cols = self.worldMap.shape[1]
         self.openList = PriorityQueue()
@@ -40,7 +41,7 @@ class astar_planner:
 
     def IsTerminal(self, node, goal):
         if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal: return True #planning completed if goal is in the observed map and we have reached that goal.
-        elif self.worldMap[node.x, node.y] == 0: return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
+        elif (self.worldMap[node.x, node.y]==0 or (self.worldMap[node.x, node.y]==4 and self.state[node.x, node.y] == 1)) : return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
         return False
 
     def CalculatePath(self, goal):
@@ -52,21 +53,15 @@ class astar_planner:
         self.openNodesList[self.CalculateKey(self.startNode.x, self.startNode.y)] = self.startNode
         self.goalPosLists = np.where(self.worldMap==2)
 
-        count = 0
-
         while(not self.openList.empty()):
-            count += 1
             currentNode = self.openList.pop()
             #if already popped, continue.
             if currentNode.closed:
                 continue
 
             currentNode.closed = True
-            #if a frontier reached, return the path.
-            # if (self.worldMap[currentNode.x,currentNode.y] == goal):
-            #   print('here')
-
             if (self.IsTerminal(currentNode, goal)):
+                #The path obtained here is in reverse order. The last coordinate in the path is the current position of the agent.
                 path = self.BacktracePath(currentNode) 
                 return path
 
@@ -104,7 +99,7 @@ class astar_planner:
             path.append((node.x, node.y))
             node = node.parent
         # path.reverse()
-
+        #the path obtained here is obtained by backtracking and is in reverse order. The last coordinate in the path is the current position of the agent.
         return path
 
     #malmo path to actions. Don't know if this works. 
@@ -170,11 +165,9 @@ class astar_planner:
 
         return actions
 
-
-
-
     #minigrid path to actions. Does not work right now.
-    def PathToAction(self, path, agentDirection):
+    def PathToAction(self, path, agentDirection, goal):
+        #the path obtained here is in reverse order. The last coordinate in the path is the current position of the agent.
         actionList = []
         currentPosition = path.pop()
         currentAgentDirection = agentDirection
@@ -205,21 +198,28 @@ class astar_planner:
                 actionList.append(0)
                 actionList.append(0)
 
-            #if in the next position, there is a door, open the door.
-            if self.worldMap[nextPosition[0], nextPosition[1]] == 4:
+            #if in the next position, there is a door and it is closed, open the door.
+            if self.worldMap[nextPosition[0], nextPosition[1]] == 4 and self.state[nextPosition[0], nextPosition[1]] == 1:
                 actionList.append(5)
 
             actionList.append(2)
             currentPosition = nextPosition
             currentAgentDirection = nextAgentDirection
         
+        #if we had found the plan till the goal, append a -1 at the end. This is used as done.
+        if self.worldMap[currentPosition[0],currentPosition[1]] == goal:
+            actionList.append(-1)
+
+        #actionList right now is is the correct order. However, since we are popping an action everytime we call Act, I reversed the order below.
         actionList.reverse()
 
+        #output of the function is action list in reverse order. We can pop the action one by one.
         return actionList
 
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
         self.worldMap = obs['image'][:,:,0]
+        self.state = obs['image'][:,:,2]
         return
 
     def Act(self, goal, obs=None, yaw =0, action_type="minigrid"):
@@ -242,20 +242,19 @@ class astar_planner:
             print("replanning")
             self.openList = PriorityQueue()
             self.openNodesList = {}
+            #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
-            print(path)
             self.steps = 0
             if(action_type=="minigrid"):
-                self.actionList = self.PathToAction(path, obs['direction'])
+                self.actionList = self.PathToAction(path, obs['direction'], goal)
             elif(action_type=="malmo"):
                 self.actionList = self.get_cardinal_action_commands(yaw, path)
                 return self.actionList
-            # pdb.set_trace()
 
-        #once we have a plan
+        #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
+        #if the returned action is -1, then it means we have reached the goal.
         self.steps += 1
-        return self.actionList
-        # return self.actionList.pop()
+        return self.actionList.pop()
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
