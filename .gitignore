@@ -11,4 +11,7 @@ env/
 .travis.yml
 *.swp
 .vscode
-
+_to_pngs.sh
+_ffmpeg.out
+run_planner_malmo.py
+frame_info.txt
