@@ -10,4 +10,5 @@ saved_data/
 env/
 .travis.yml
 *.swp
+.vscode
 

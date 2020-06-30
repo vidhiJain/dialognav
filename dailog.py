@@ -9,24 +9,13 @@ import planner
 import gym_minigrid
 
 
+
 discovered =  {"previous_subject": None, "victim": {}, "door": {}, "key": {}}
 
-def start_dialog(env):
-    observations = env.reset()
-    action_planner = planner.astar_planner(observations)
-
-    while True:
-        ip = input(">> ").lower().strip()
-        if ip == "quit":
-            break
-        response = process_dialog(ip, action_planner, observations)
-        print(response)
-    print("Done")
-
-def process_dialog(text, planner, observations, env):
+def process_dialog(text, planner, observations, env, window):
     # Identify dialog type
     if("go to" in text):
-        response = follow_nav_command(text, planner, observations, env)
+        response = follow_nav_command(text, planner, observations, env, window)
     else:
         dialog_type = get_dialog_type(text)
         response = gen_response(dialog_type, env)
@@ -38,7 +27,7 @@ def process_dialog(text, planner, observations, env):
             discovered["previous_subject"] = "key"
     return response
 
-def follow_nav_command(text, planner, observations, env):
+def follow_nav_command(text, planner, observations, env, window):
     done = False
     response = ""
     if ("victim" in text):
@@ -51,7 +40,11 @@ def follow_nav_command(text, planner, observations, env):
         goal = 5
         response = "key"
 
-    actionList = planner.Act(obs=observations, goal=goal, action_type="minigrid")
+    obs = {
+        "direction": observations['direction'],
+        "image": observations['image_full']
+    }
+    actionList = planner.Act(obs=obs, goal=goal, action_type="minigrid")
     
     if(len(actionList)==0):
         response += " does not exist in the current env"
@@ -60,6 +53,10 @@ def follow_nav_command(text, planner, observations, env):
     while len(actionList):
         action = actionList.pop()
         obs, reward, done, info = env.step(action)
+        if window is not None:
+            img = env.render('rgb_array')
+            window.show_img(img)
+
 
 def get_dialog_type(text):
     dialog_type = ""
