@@ -15,7 +15,7 @@ env = gym.make('MiniGrid-MultiRoom-N6-v0')
 # env = RGBImgPartialObsWrapper(env)
 
 # env = wrappers.FullyObsWrapper(env)
-env = wrappers.VisdialWrapper(env)
+env = wrappers.VisdialWrapper(env, turn_angle=45)
 window = Window('gym_minigrid - ' + 'MiniGrid-MinimapForSparky-v0')
 obs = env.reset()
 # env.render()
@@ -26,6 +26,7 @@ done = False
 
 while (True):
     action = agent.Act(obs=obs, goal=8, action_type="minigrid")
+    # pdb.set_trace()
     #we have reached if the action is -1.
     if action == -1:
     	print("reached goal")
