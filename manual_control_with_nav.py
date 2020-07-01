@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 import gym
 import gym_minigrid
-from gym_minigrid.wrappers import VisdialWrapper
+from gym_minigrid.wrappers import VisdialWrapper, FullyObsWrapper
 from gym_minigrid.window import Window
 
 import planner
@@ -106,6 +106,7 @@ args = parser.parse_args()
 
 env = gym.make(args.env)
 env = VisdialWrapper(env, args.tile_size)
+# env = FullyObsWrapper(env)
 
 # TO RECORD
 # env = gym.wrappers.Monitor(env, "recording")
@@ -125,16 +126,15 @@ window.show(block=False)
 
 # ------------------------------------------------
 def start_dialog(env, window=None):
-    observations = env.reset()
     obs = env.reset()
-
-    action_planner = planner.astar_planner(obs)
+    #this observation is just passed to intialise the parameters of the planner.
+    agent = planner.astar_planner(obs)
 
     while True:
         ip = input(">> ").lower().strip()
         if ip == "quit":
             break
-        response = process_dialog(ip, action_planner, observations, env, window)
+        response = process_dialog(ip, agent, env, window)
         print(response)
     print("Done")
 

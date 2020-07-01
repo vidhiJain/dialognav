@@ -12,10 +12,10 @@ import gym_minigrid
 
 discovered =  {"previous_subject": None, "victim": {}, "door": {}, "key": {}}
 
-def process_dialog(text, planner, observations, env, window):
+def process_dialog(text, agent, env, window):
     # Identify dialog type
     if("go to" in text):
-        response = follow_nav_command(text, planner, observations, env, window)
+        response = follow_nav_command(text, agent, env, window)
     else:
         dialog_type = get_dialog_type(text)
         response = gen_response(dialog_type, env)
@@ -27,7 +27,7 @@ def process_dialog(text, planner, observations, env, window):
             discovered["previous_subject"] = "key"
     return response
 
-def follow_nav_command(text, planner, observations, env, window):
+def follow_nav_command(text, agent, env, window):
     done = False
     response = ""
     if ("victim" in text):
@@ -40,19 +40,24 @@ def follow_nav_command(text, planner, observations, env, window):
         goal = 5
         response = "key"
 
-    actionList = planner.Act(obs=observations, goal=goal, action_type="minigrid")
-    
-    if(len(actionList)==0):
-        response += " does not exist in the current env"
-        return response
+    # if(len(actionList)==0):
+    #     response += " does not exist in the current env"
+    #     return response
 
-    while len(actionList):
-        action = actionList.pop()
+    #just get the current observation
+    obs = env.gen_obs()
+    while True:
+        action = agent.Act(obs=obs, goal=goal, action_type="minigrid")
+        if (action == -1):
+            response += " we have reached the goal "
+            return response
+        if (action == None):
+            response += " does not exist in the current env"
+            return response
         obs, reward, done, info = env.step(action)
         if window is not None:
             img = env.render('rgb_array')
             window.show_img(img)
-
 
 def get_dialog_type(text):
     dialog_type = ""

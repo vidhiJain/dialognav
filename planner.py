@@ -15,7 +15,7 @@ class Node():
         return self.g <= other.g
 
 class astar_planner:
-    def __init__(self, obs):
+    def __init__(self, obs, gridConnection=8):
         """
         World Map should be a 2D array with:
         0 : free space
@@ -24,16 +24,20 @@ class astar_planner:
         3 : current position.
         """
         self.worldMap = obs['image'][:,:,0]
+        self.visitedGoals = np.zeros((self.worldMap.shape[0], self.worldMap.shape[1]))
         self.state = obs['image'][:,:,2]
         self.rows = self.worldMap.shape[0] 
         self.cols = self.worldMap.shape[1]
         self.openList = PriorityQueue()
         self.openNodesList = {}
         self.epsilon = 1
-        # self.dx = [-1, 0, 1, 0]
-        # self.dy = [0, -1, 0, 1]
-        self.dx = [-1, -1, -1, 0, 0, 1, 1, 1]
-        self.dy = [-1, 0, 1, -1, 1, -1, 0, 1]
+        self.gridConnection = gridConnection
+        if self.gridConnection == 4: 
+            self.dx = [-1, 0, 1, 0]
+            self.dy = [0, -1, 0, 1]
+        if self.gridConnection == 8: 
+            self.dx = [-1, -1, -1, 0, 0, 1, 1, 1]
+            self.dy = [-1, 0, 1, -1, 1, -1, 0, 1]
         self.maxSteps = 200
         self.steps = 0
         self.actionList = []
@@ -42,7 +46,9 @@ class astar_planner:
         return self.cols*x + y
 
     def IsTerminal(self, node, goal):
-        if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal: return True #planning completed if goal is in the observed map and we have reached that goal.
+        if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal and not self.visitedGoals[node.x][node.y]:
+            self.visitedGoals[node.x][node.y] = 1 #mark a goal as visited if we have reached there.
+            return True #planning completed if goal is in the observed map and we have reached that goal.
         # elif (self.worldMap[node.x, node.y]==0 or (self.worldMap[node.x, node.y]==4 and self.state[node.x, node.y] == 1)) : return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
         elif (self.worldMap[node.x, node.y]==0): return True
         return False
@@ -181,73 +187,74 @@ class astar_planner:
             differenceY = nextPosition[1] - currentPosition[1]
 
             #deciding the next direction according to a 4 connected grid.
-            # if differenceX == 1:
-            #     nextAgentDirection = 0
-            # elif differenceX == -1:
-            #     nextAgentDirection = 2
-            # elif differenceY == 1:
-            #     nextAgentDirection = 1
-            # elif differenceY == -1:
-            #     nextAgentDirection = 3
+            if self.gridConnection == 4:
+                if differenceX == 1:
+                    nextAgentDirection = 0
+                elif differenceX == -1:
+                    nextAgentDirection = 2
+                elif differenceY == 1:
+                    nextAgentDirection = 1
+                elif differenceY == -1:
+                    nextAgentDirection = 3
 
-            #deciding the next direction according to an 8 connected grid. Based on agent direction in visdialwrapper.
-            if differenceX == -1 and differenceY == 1:
-                nextAgentDirection = 0
-            elif differenceX == -1 and differenceY == 0:
-                nextAgentDirection = 1
-            elif differenceX == -1 and differenceY == -1:
-                nextAgentDirection = 2
-            elif differenceX == 0 and differenceY == -1:
-                nextAgentDirection = 3
-            elif differenceX == 1 and differenceY == -1:
-                nextAgentDirection = 4
-            elif differenceX == 1 and differenceY == 0:
-                nextAgentDirection = 5
-            elif differenceX == 1 and differenceY == 1:
-                nextAgentDirection = 6
-            elif differenceX == 0 and differenceY == 1:
-                nextAgentDirection = 7
-
-            differenceAction = nextAgentDirection - currentAgentDirection
+                differenceAction = nextAgentDirection - currentAgentDirection
             
-            #rotation according to a 4 connected grid.
-            # if (differenceAction == 1 or differenceAction == -3):
-            #     actionList.append(1)
-            # elif (differenceAction == -1 or differenceAction == 3):
-            #     actionList.append(0)
-            # elif (differenceAction == 2):
-            #     actionList.append(1)
-            #     actionList.append(1)
-            # elif (differenceAction == -2):
-            #     actionList.append(0)
-            #     actionList.append(0)
+                #rotation according to a 4 connected grid.
+                if (differenceAction == 1 or differenceAction == -3):
+                    actionList.append(1)
+                elif (differenceAction == -1 or differenceAction == 3):
+                    actionList.append(0)
+                elif (differenceAction == 2):
+                    actionList.append(1)
+                    actionList.append(1)
+                elif (differenceAction == -2):
+                    actionList.append(0)
+                    actionList.append(0)
 
-            #rotation according to a 8 connected grid.
-            #right rotation by one turn
-            if (differenceAction == 1 or differenceAction == -7):
-                actionList.extend([1])
-            #right rotation by two turns
-            elif (differenceAction == 2 or differenceAction == -6):
-                actionList.extend([1,1])
-            #right rotation by three turns
-            elif (differenceAction == 3 or differenceAction == -5):
-                actionList.extend([1,1,1])
+            elif self.gridConnection == 8:
+                #deciding the next direction according to an 8 connected grid. Based on agent direction in visdialwrapper.
+                if differenceX == -1 and differenceY == 1:
+                    nextAgentDirection = 0
+                elif differenceX == -1 and differenceY == 0:
+                    nextAgentDirection = 1
+                elif differenceX == -1 and differenceY == -1:
+                    nextAgentDirection = 2
+                elif differenceX == 0 and differenceY == -1:
+                    nextAgentDirection = 3
+                elif differenceX == 1 and differenceY == -1:
+                    nextAgentDirection = 4
+                elif differenceX == 1 and differenceY == 0:
+                    nextAgentDirection = 5
+                elif differenceX == 1 and differenceY == 1:
+                    nextAgentDirection = 6
+                elif differenceX == 0 and differenceY == 1:
+                    nextAgentDirection = 7
 
-            #left rotation by one turn
-            elif (differenceAction == -1 or differenceAction == 7):
-                actionList.extend([0])
-            #left rotation by two turn
-            elif (differenceAction == -2 or differenceAction == 6):
-                actionList.extend([0,0])
-            #left rotation by three turn
-            elif (differenceAction == -3 or differenceAction == 5):
-                actionList.extend([0,0,0])            
-                
-            elif (differenceAction == 4):
-                actionList.extend([1,1,1,1])
-            
-            elif (differenceAction == -4):
-                actionList.extend([0,0,0,0])
+                differenceAction = nextAgentDirection - currentAgentDirection
+
+                # rotation according to a 8 connected grid.
+                #right rotation by one turn
+                if (differenceAction == 1 or differenceAction == -7):
+                    actionList.extend([1])
+                #right rotation by two turns
+                elif (differenceAction == 2 or differenceAction == -6):
+                    actionList.extend([1,1])
+                #right rotation by three turns
+                elif (differenceAction == 3 or differenceAction == -5):
+                    actionList.extend([1,1,1])
+                #left rotation by one turn
+                elif (differenceAction == -1 or differenceAction == 7):
+                    actionList.extend([0])
+                #left rotation by two turn
+                elif (differenceAction == -2 or differenceAction == 6):
+                    actionList.extend([0,0])
+                #left rotation by three turn
+                elif (differenceAction == -3 or differenceAction == 5):
+                    actionList.extend([0,0,0])            
+                elif (differenceAction == 4):
+                    actionList.extend([1,1,1,1])            
+                elif (differenceAction == -4):
+                    actionList.extend([0,0,0,0])
 
             #if in the next position, there is a door and it is closed, open the door.
             if self.worldMap[nextPosition[0], nextPosition[1]] == 4 and self.state[nextPosition[0], nextPosition[1]] == 1:
@@ -295,11 +302,10 @@ class astar_planner:
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
-            print(path)
+            print('path ', path)
             self.steps = 0
             if(action_type=="minigrid"):
                 self.actionList = self.PathToAction(path, obs['direction'], goal)
-                print(self.actionList)
             elif(action_type=="malmo"):
                 self.actionList = self.get_cardinal_action_commands(yaw, path)
                 return self.actionList
@@ -308,8 +314,8 @@ class astar_planner:
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
         #if the returned action is -1, then it means we have reached the goal.
         self.steps += 1
-        # return self.actionList.pop()
-        return self.actionList
+        return self.actionList.pop()
+        # return self.actionList
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
