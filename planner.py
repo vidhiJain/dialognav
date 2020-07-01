@@ -8,7 +8,6 @@ class Node():
         self.y = y
         self.parent = None
         self.g = None
-        self.cost = 1
         self.closed = False
 
     def __lt__(self, other):
@@ -44,6 +43,14 @@ class astar_planner:
 
     def CalculateKey(self, x, y):
         return self.cols*x + y
+
+    def CalculateCost(self, currentNode, neighborNode):
+        differenceX = neighborNode.x - currentNode.x
+        differenceY = neighborNode.y - currentNode.y
+
+        if differenceX == 0 or differenceY == 0:
+            return 1
+        return 1.414
 
     def IsTerminal(self, node, goal):
         if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal and not self.visitedGoals[node.x][node.y]:
@@ -84,16 +91,18 @@ class astar_planner:
                     #if neighboring node has been visited before, retrieve it, update it's g value and push it in the open list.
                     if neighborKey in self.openNodesList:
                         neighborNode = self.openNodesList[neighborKey]
+                        transitionCost = self.CalculateCost(currentNode, neighborNode)
                         if neighborNode.closed:
                             continue
-                        if (neighborNode.g>currentNode.g+neighborNode.cost):
-                            neighborNode.g = currentNode.g+neighborNode.cost
+                        if (neighborNode.g>currentNode.g+transitionCost):
+                            neighborNode.g = currentNode.g+transitionCost
                             neighborNode.parent = currentNode
                             self.openList.put(neighborNode)
 
                     else:
                         neighborNode = Node(neighborX, neighborY)
-                        neighborNode.g = currentNode.g+neighborNode.cost
+                        transitionCost = self.CalculateCost(currentNode, neighborNode)
+                        neighborNode.g = currentNode.g+transitionCost
                         neighborNode.parent = currentNode
                         self.openList.put(neighborNode)
                         self.openNodesList[neighborKey] = neighborNode
