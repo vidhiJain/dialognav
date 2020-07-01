@@ -309,7 +309,7 @@ class astar_planner:
         #if the returned action is -1, then it means we have reached the goal.
         self.steps += 1
         # return self.actionList.pop()
-        return actionList
+        return self.actionList
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
