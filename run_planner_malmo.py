@@ -72,12 +72,14 @@ def make_dir(dir_name):
         os.mkdir(dir_name)
 
 def get_actions(yaw):
-    env = gym.make('MiniGrid-NumpyMapMinecraftUSAR-v')
+    # env = gym.make('MiniGrid-NumpyMapMinecraftUSAR-v0')
+    env = gym.make('MiniGrid-MinimapForSparky-v0')
     env = wrappers.VisdialWrapper(env)
     obs = env.reset()
     agent = planner.astar_planner(obs)
     goal = 8
     action_list = agent.Act(goal,obs,yaw=yaw,action_type="malmo")
+    # reversed action_list
     env.close()
     return action_list
 
@@ -137,37 +139,40 @@ def main():
         logger.info("Waiting for the mission to start")
         world_state = agent_host.getWorldState()
         
-        print("world_state", world_state.has_mission_begun)
+        # print("world_state", world_state.has_mission_begun)
         while not world_state.has_mission_begun:
             world_state = agent_host.getWorldState()
             print(".", end="")
             time.sleep(0.1)
         print()
-        yaw = 270
+        yaw = 180
         action_list = get_actions(yaw)
-        agent_host.sendCommand( "move 1" )
+        # print(action_list)
+        # agent_host.sendCommand( "move 1" )
         while world_state.is_mission_running and len(action_list):
             world_state = agent_host.getWorldState()
             while world_state.number_of_video_frames_since_last_state < 1:
-                logger.info("Waiting for frames...")
+                # logger.info("Waiting for frames...")
                 time.sleep(0.05)
                 world_state = agent_host.getWorldState()
 
-            logger.info("Got frame!")
+            # logger.info("Got frame!")
             
 
             world_state = agent_host.getWorldState()
-            print("num_vid_frame ", world_state.number_of_video_frames_since_last_state)
+            # print("num_vid_frame ", world_state.number_of_video_frames_since_last_state)
             while world_state.number_of_video_frames_since_last_state > 1 and world_state.is_mission_running:
                 video_frame = world_state.video_frames[-1]
                 frame = get_image_frame(video_frame, height=480, width=640, depth=False)
                 plt.imshow(frame)
                 plt.show()
             action = action_list.pop()
-            print(action)
-            pdb.set_trace()
+            if(action=='done'):
+                pdb.set_trace()
+            print("action: {}".format(action))
+            # pdb.set_trace()
             agent_host.sendCommand(action)
-            time.sleep(0.1)
+            time.sleep(0.5)
 
 def get_image_frame(video_frame, height, width, depth=False):                                                   
     pixels = video_frame.pixels

@@ -128,14 +128,16 @@ class astar_planner:
         # goal_position = get_state_coord(solution_path.pop(0))
         while len(path) != 0:
             dest_pos = path.pop()
+            print("curr_pos, dest_pos: {} {}".format(curr_pos, dest_pos))
             diff_x = dest_pos[0] - curr_pos[0]
             diff_z = dest_pos[1] - curr_pos[1]
-            if diff_z == 1:
+            print("diff : ({}, {})".format(diff_x, diff_z))
+            if diff_x == 1:
                 dest_yaw = 270
                 if(curr_yaw!=dest_yaw):
                     action_list.extend(self.get_turn_actions(curr_yaw, dest_yaw))
                 action_list.append("moveeast 1")
-            elif diff_z == -1:
+            elif diff_x == -1:
                 dest_yaw = 90
                 if(curr_yaw!=dest_yaw):
                     action_list.extend(self.get_turn_actions(curr_yaw, dest_yaw))
@@ -144,12 +146,12 @@ class astar_planner:
                 # print("no move in z direction")
                 pass 
 
-            if diff_x == -1:
+            if diff_z == 1:
                 dest_yaw = 0
                 if(curr_yaw!=dest_yaw):
                     action_list.extend(self.get_turn_actions(curr_yaw, dest_yaw))
                 action_list.append("movesouth 1")
-            elif diff_x == 1: 
+            elif diff_z == -1: 
                 dest_yaw = 180
                 if(curr_yaw!=dest_yaw):
                     action_list.extend(self.get_turn_actions(curr_yaw, dest_yaw))
@@ -157,7 +159,9 @@ class astar_planner:
             else:
                 pass
             curr_pos = dest_pos*1
+        action_list.reverse()
         return action_list
+
 
     def get_turn_actions(self,curr_yaw, dest_yaw):
         '''
@@ -165,6 +169,7 @@ class astar_planner:
         '''
         curr_yaw = curr_yaw // 90
         dest_yaw = dest_yaw // 90
+        # print("curr_yaw, dest_yaw: {} {}".format(curr_yaw, dest_yaw))
         yaw_diff = dest_yaw - curr_yaw
 
         actions = []
@@ -173,12 +178,13 @@ class astar_planner:
             yaw_diff = int((0 - yaw_diff) / 3)
 
         turn_dir = -1
-        if(yaw_diff<0):
+        if(yaw_diff>0):
             turn_dir = 1
 
         for i in range(np.abs(yaw_diff)):
             actions.append("turn {}".format(turn_dir))
-
+        # print("turn actions: {}".format(actions))
+        actions = []
         return actions
 
     #minigrid path to actions. Does not work right now.
@@ -281,6 +287,25 @@ class astar_planner:
         #output of the function is action list in reverse order. We can pop the action one by one.
         return actionList
 
+    def minigrid_actions_to_malmo(self, mini_actionList):
+        actionList = []
+        for mini_action in mini_actionList:
+            if(mini_action==0):
+                action = 'turn -1'
+            elif(mini_action==1):
+                action = 'turn 1'
+            elif(mini_action==2):
+                action = 'move 1'
+            elif(mini_action==5):
+                action = 'attack 1'
+                # action = 'use 1'
+            elif(mini_action==-1):
+                action = 'done'
+            
+            actionList.append(action)
+
+        return actionList
+    
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
         self.worldMap = obs['image'][:,:,0]
@@ -309,12 +334,15 @@ class astar_planner:
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
-            print('path ', path)
+            # print('path ', path)
             self.steps = 0
-            if(action_type=="minigrid"):
-                self.actionList = self.PathToAction(path, obs['direction'], goal)
-            elif(action_type=="malmo"):
-                self.actionList = self.get_cardinal_action_commands(yaw, path)
+            # if(action_type=="minigrid"):
+            self.actionList = self.PathToAction(path, obs['direction'], goal)
+            # print(self.actionList)
+            # elif(action_type=="malmo"):
+            if(action_type=="malmo"):
+                self.actionList = self.minigrid_actions_to_malmo(self.actionList)
+                # self.actionList = self.get_cardinal_action_commands(yaw, path)
                 return self.actionList
 
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.

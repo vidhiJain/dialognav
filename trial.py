@@ -15,13 +15,13 @@ env = gym.make('MiniGrid-MultiRoom-N6-v0')
 # env = RGBImgPartialObsWrapper(env)
 
 # env = wrappers.FullyObsWrapper(env)
-env = wrappers.VisdialWrapper(env, turn_angle=45)
+env = wrappers.VisdialWrapper(env, turn_angle=90)
 window = Window('gym_minigrid - ' + 'MiniGrid-MinimapForSparky-v0')
 obs = env.reset()
 # env.render()
 img = env.render()
 window.show_img(img=img)
-agent = planner.astar_planner(obs)
+agent = planner.astar_planner(obs, gridConnection=4)
 done = False
 
 while (True):
