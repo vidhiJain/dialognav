@@ -377,7 +377,7 @@ def find_objects(grid, visibility_mask, observed_mask, tile_size):
     visible_objects = {"door": [], "victim": [], "key": []}
     for i, (obj, isVisible, wasObserved) in enumerate(zip(grid, visibility_mask, observed_mask)):
         coords = (i%w * tile_size + tile_size // 2, i//w * tile_size - tile_size // 2)
-        if isinstance(obj, gym_minigrid.minigrid.Goal) or isinstance(obj, gym_minigrid.minigrid.Box) and obj not in visible_objects["victim"]:
+        if isinstance(obj, gym_minigrid.minigrid.Goal) and obj not in visible_objects["victim"]:
             if isVisible:
                 visible_objects["victim"].append([coords, obj])
             if wasObserved:
