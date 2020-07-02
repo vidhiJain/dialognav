@@ -37,7 +37,7 @@ class astar_planner:
         if self.gridConnection == 8: 
             self.dx = [-1, -1, -1, 0, 0, 1, 1, 1]
             self.dy = [-1, 0, 1, -1, 1, -1, 0, 1]
-        self.maxSteps = 200
+        self.maxSteps = 20
         self.steps = 0
         self.actionList = []
 
@@ -53,9 +53,7 @@ class astar_planner:
         return 1.414
 
     def IsTerminal(self, node, goal):
-        if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal and not self.visitedGoals[node.x][node.y]:
-            self.visitedGoals[node.x][node.y] = 1 #mark a goal as visited if we have reached there.
-            return True #planning completed if goal is in the observed map and we have reached that goal.
+        if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal and not self.visitedGoals[node.x][node.y]: return True #planning completed if goal is in the observed map and we have reached that goal.
         # elif (self.worldMap[node.x, node.y]==0 or (self.worldMap[node.x, node.y]==4 and self.state[node.x, node.y] == 1)) : return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
         elif (self.worldMap[node.x, node.y]==0): return True
         return False
@@ -318,13 +316,22 @@ class astar_planner:
             elif(action_type=="malmo"):
                 self.actionList = self.get_cardinal_action_commands(yaw, path)
                 return self.actionList
-            # pdb.set_trace()
 
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
         #if the returned action is -1, then it means we have reached the goal.
         self.steps += 1
-        return self.actionList.pop()
-        # return self.actionList
+        action = self.actionList.pop()
+        
+        #if action = -1, we have reached the goal. find out which of the neighbors is goal and mark it visited.
+        if action == -1:
+            currentPos = np.where(self.worldMap == 10)
+            for idx in range(len(self.dx)):
+                neighborX = currentPos[0][0]+self.dx[idx]
+                neighborY = currentPos[1][0]+self.dy[idx]
+                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and self.worldMap[neighborX][neighborY] == goal):
+                    self.visitedGoals[neighborX][neighborY] = 1
+
+        return action
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
