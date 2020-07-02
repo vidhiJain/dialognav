@@ -14,7 +14,7 @@ class Node():
         return self.g <= other.g
 
 class astar_planner:
-    def __init__(self, obs, gridConnection=8):
+    def __init__(self, obs, gridConnection=4):
         """
         World Map should be a 2D array with:
         0 : free space
@@ -196,13 +196,13 @@ class astar_planner:
             #deciding the next direction according to a 4 connected grid.
             if self.gridConnection == 4:
                 if differenceX == 1:
-                    nextAgentDirection = 0
-                elif differenceX == -1:
                     nextAgentDirection = 2
+                elif differenceX == -1:
+                    nextAgentDirection = 0
                 elif differenceY == 1:
-                    nextAgentDirection = 1
-                elif differenceY == -1:
                     nextAgentDirection = 3
+                elif differenceY == -1:
+                    nextAgentDirection = 1
 
                 differenceAction = nextAgentDirection - currentAgentDirection
             
