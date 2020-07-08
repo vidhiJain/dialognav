@@ -306,23 +306,29 @@ class astar_planner:
 
         return actionList
     
+    def minigrid_action_to_malmo(self, minigrid_action):
+        if(minigrid_action==0):
+            action = 'turn -1'
+        elif(minigrid_action==1):
+            action = 'turn 1'
+        elif(minigrid_action==2):
+            action = 'move 1'
+        elif(minigrid_action==5):
+            action = 'attack 1'
+            # action = 'use 1'
+        elif(minigrid_action==-1):
+            action = 'done'
+
+        return action
+        
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
         self.worldMap = obs['image'][:,:,0]
         self.state = obs['image'][:,:,2]
         return
 
-    def Act(self, goal, obs=None, yaw =0, action_type="minigrid"):
+    def Act(self, goal, obs=None, action_type="minigrid"):
         #if partial observable, integrate the current map.
-        if(action_type=="malmo"):
-            if(obs['direction']==0):
-                yaw = 90
-            elif(obs['direction']==1):
-                yaw = 0
-            elif(obs['direction']==2):
-                yaw = 270
-            elif(obs['direction']==3):
-                yaw = 180
 
         if obs is not None:
             self.IntegrateMap(obs)
@@ -334,16 +340,11 @@ class astar_planner:
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
-            # print('path ', path)
             self.steps = 0
-            # if(action_type=="minigrid"):
             self.actionList = self.PathToAction(path, obs['direction'], goal)
-            # print(self.actionList)
-            # elif(action_type=="malmo"):
+            
             if(action_type=="malmo"):
-                self.actionList = self.minigrid_actions_to_malmo(self.actionList)
-                # self.actionList = self.get_cardinal_action_commands(yaw, path)
-                return self.actionList
+                self.malmo_actionList = self.minigrid_actions_to_malmo(self.actionList)
 
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
         #if the returned action is -1, then it means we have reached the goal.
@@ -359,7 +360,11 @@ class astar_planner:
                 if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and self.worldMap[neighborX][neighborY] == goal):
                     self.visitedGoals[neighborX][neighborY] = 1
 
-        return action
+        if(action_type=="malmo"):
+            malmo_action = self.malmo_actionList.pop()
+            return action, malmo_action
+        else:
+            return action
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
