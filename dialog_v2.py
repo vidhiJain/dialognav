@@ -333,7 +333,7 @@ class DialogProcessing():
 
         # Apply filters to queries objects based on object description
         queried_objs = filter_obj(mainObj, queried_objs)
-        
+
         close_objs = []
         # Filter if close object specified
         if "near" in parsed_dialog:
@@ -354,6 +354,7 @@ class DialogProcessing():
         queried_objs = unique_filter(queried_objs)
 
         return queried_objs
+
     def find_all_objects(self):
         grid, visibility_mask, observed_mask, tile_size = self.env.grid.grid, self.env.visible_grid, self.env.observed_absolute_map, self.env.tile_size
 
