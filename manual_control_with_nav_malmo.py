@@ -20,6 +20,8 @@ from copy import deepcopy as dc
 
 from dialog_v2 import DialogProcessing
 
+import os
+
 def redraw(img):
     # if not args.agent_view:
         # img = env.render('rgb_array')
@@ -132,7 +134,7 @@ reset()
 
 # Blocking event loop
 window.show(block=False)
-malmo_agent_host = None#start_malmo_env()
+malmo_agent_host = start_malmo_env()
 # ------------------------------------------------
 # def start_dialog(env, window=None):
 #     obs = env.reset()
@@ -157,10 +159,9 @@ def start_dialog(env, malmo_agent_host, window):
     #this observation is just passed to intialise the parameters of the planner.
     agent = planner.astar_planner(obs)
     dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)
-    
+    os.system("clear")
     while True:
         ip = input(">> ").lower().strip()
-        print(ip)
         if ip == "quit":
             break
         response = dp.process_dialog(ip)

@@ -54,7 +54,7 @@ class DialogProcessing():
 
         self.ACCEPTED_POS = set(["NOUN", "ADP", "ADJ", "VERB", "ADV"])
         self.ACTION_WORDS = {"go", "locate", "search", "find"}
-        self.DESCRIPTION_WORDS = {"is", "are", "was", "list", "seen", "visible", "located", "found"}
+        self.DESCRIPTION_WORDS = {"is", "are", "was", "list", "seen", "visible", "located", "found", "location", "position"}
 
 
         self.OBJECT_WORDS = {"victim": "victim", "door": "door", "key": "key",
@@ -64,7 +64,8 @@ class DialogProcessing():
         self.OBJECT_STATE_WORDS = {"open": 0, "close": 1}
         self.OBJECT_COLOR_WORDS = {"red": 0, "brown": 1, "green": 2, "blue": 3, "yellow": 4} 
         self.OTHER_WORDS = {"many", "all", "front"}
-        self.LOCATION_WORDS = {"where", "location", "position", "seen"}
+        self.LOCATION_WORDS = {"where", "location", "position", "seen", "all", "located"}
+        self.PLURAL_WORDS = {"doors", "keys", "victims"}
 
         self.RESPONSE_POS_WORDS = {"found", "located", "seen", "discovered"}
         self.RESPONSE_MATCH_WORDS = {"matching", "potential"}
@@ -112,16 +113,18 @@ class DialogProcessing():
 
         doc = nlp(text)
         parseTree = self.parse_doc(doc)
-        print("Parse Tree:\n", parseTree)
-        print("------")
+        # print("Parse Tree:\n", parseTree)
+        # print("------")
 
         items = self.get_items(parseTree.root)
-        print("Items:\n", items)
-        print("------")
+        # print("Items:\n", items)
+        # print("------")
 
         
-        if items["type"] is None:
+        if (items["type"] is None) or ("object" not in items) or (items["object"]["name"] not in self.OBJECT_WORDS):
             return "Can not process the dialog!"
+        else:
+            self.prev_subject = items["object"]["name"]
 
         response = self.gen_response(items, text)
 
@@ -145,6 +148,7 @@ class DialogProcessing():
         minigrid_obs = self.env.gen_obs()
         done = False
 
+        # If malmo env 
         if self.malmo_agent is not None:
             world_state = self.malmo_agent.getWorldState()
 
@@ -154,9 +158,11 @@ class DialogProcessing():
                 time.sleep(0.1)
             print()
 
-        minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
-        minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
+        # minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
+        # minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
+        action = 0
         while action!="done":
+            # If malmo env 
             if self.malmo_agent is not None:
                 if not world_state.is_mission_running:
                     break
@@ -164,12 +170,15 @@ class DialogProcessing():
                 while world_state.number_of_video_frames_since_last_state < 1:
                     time.sleep(0.05)
                     world_state = self.malmo_agent.getWorldState()
+                
                 world_state = self.malmo_agent.getWorldState()
-                print("action: {}".format(action))
-                self.malmo_agent.sendCommand(action)
             minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
+            # If malmo env 
+            if self.malmo_agent is not None: 
+                self.malmo_agent.sendCommand(action)
+            
             minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
-            time.sleep(0.2)
+            time.sleep(0.5)
         
         response += " was reached!"
         return response 
@@ -180,7 +189,11 @@ class DialogProcessing():
             for word in self.LOCATION_WORDS:
                 if word in dialog: return True
             return False
-        
+
+        def queries_multiple(dialog):
+            for word in self.PLURAL_WORDS:
+                if word in dialog: return True
+            return False
         # def queries_description(dialog):
         #     for word in self
 
@@ -194,10 +207,14 @@ class DialogProcessing():
 
             relevant_objects = self.get_relevant_objects(parsed_dialog, observed_objects, visible_objects)
 
+            if len(relevant_objects) == 0:
+                response += "No {} seen!".format(parsed_dialog["object"]["name"])
+                return response
+
             # Answer the questions
             if queries_location(dialog):
                 # Location of object
-                if len(relevant_objects) > 1:
+                if queries_multiple(dialog):
                     response += "{} {} {} were {} at coordinates [X, Y]\n{}".format(
                         len(relevant_objects),
                         random.sample(self.RESPONSE_MATCH_WORDS, 1)[0],
@@ -209,10 +226,10 @@ class DialogProcessing():
                     response += "A {} was {} at coordinates [X, Y]\n{}".format(
                         parsed_dialog["object"]["name"],
                         random.sample(self.RESPONSE_POS_WORDS, 1)[0],
-                        ", ".join(str(i[0]) for i in relevant_objects)
+                        relevant_objects[0][0]
                     )
-            else:
-                print(relevant_objects)
+            elif len(parsed_dialog["object"]["desc"]) != 0:
+                
                 # Description of objects
                 oneObj = relevant_objects[0][1]
                 
@@ -220,11 +237,20 @@ class DialogProcessing():
                     ans = oneObj.color
                 elif parsed_dialog["object"]["desc"][0] == "state":
                     ans = oneObj.is_open
-                response += "The {} of the  {} is {}".format(
+                response += "The {} of the {} is {}".format(
                     parsed_dialog["object"]["desc"][0],
                     parsed_dialog["object"]["name"],
                     ans
                 )
+            elif len(relevant_objects):
+                response += "{} {} {} at coordinates [X, Y]\n{}".format(
+                    len(relevant_objects),
+                    random.sample(self.RESPONSE_POS_WORDS, 1)[0],
+                    parsed_dialog["object"]["name"],
+                    ", ".join(str(i[0]) for i in relevant_objects)
+                )
+            else:
+                response += "Not enough info!" 
         return response
     
     def get_relevant_objects(self, parsed_dialog, obs_objs, vis_objs):
@@ -238,7 +264,8 @@ class DialogProcessing():
                 else:
                     if obj.color != desc:
                         filtered_objs.append([coords, obj])
-        
+            return filtered_objs
+
         def filter_state(q_objs, desc, negate=False):
             filtered_objs = []
             if desc == "open":
@@ -255,15 +282,18 @@ class DialogProcessing():
                 else:
                     if obj.is_open != desc:
                         filtered_objs.append([coords, obj])
+            return filtered_objs
 
         def filter_obj(obj, queried_objs):
             for desc in obj["desc"]:
                 # Filter color
                 if desc in self.OBJECT_COLOR_WORDS:
                     queried_objs = filter_color(queried_objs, desc)
+                    print(queried_objs)
                 # Filter state
                 elif desc in self.OBJECT_STATE_WORDS:
                     queried_objs = filter_state(queried_objs, desc)
+                print(queried_objs)
             return queried_objs
 
         def filter_closeness(q_objs, c_objs, min_dist=3, negate=False):
@@ -275,31 +305,28 @@ class DialogProcessing():
                     # Skip filtering if same object
                     if q_coord == c_coord:
                         continue
-                    
                     # Get distance
                     dist = get_dist(q_coord, c_coord)
                     filtered_objs.append([q_coord, q_obj, dist])
-                #     print(dist, q_coord, c_coord)
-                #     if not negate:
-                #         if dist <= min_dist:
-                #             filtered_objs.append([q_coord, q_obj])
-                #         else:
-                #             continue
-                #     else:
-                #         # Don't keep if any other specified object in close enough
-                #         if dist <= min_dist:
-                #             found = True
-                #             break
-                # if negate and (not found):
-                #     filtered_objs.append([q_coord, q_obj])
                 filtered_objs.sort(key=lambda x: x[2], reverse=negate)
+            filtered_objs = [[x[0], x[1]] for x in filtered_objs]
             return filtered_objs
+        
+        def unique_filter(q_objs):
+            seen_set = set()
+            filtered_objs = []
+            for obj_dets in q_objs:
+                if obj_dets[0] not in seen_set:
+                    seen_set.add(obj_dets[0])
+                    filtered_objs.append(obj_dets) 
+            return filtered_objs
+
 
         mainObj = parsed_dialog["object"]
         queried_objs = None
 
         # Get objects based on visiblity condition
-        if "front" in mainObj:
+        if "front" in mainObj["desc"]:
             queried_objs = vis_objs[mainObj["name"]]
         else:
             queried_objs = obs_objs[mainObj["name"]]
@@ -318,9 +345,15 @@ class DialogProcessing():
 
             # Reduce queries objects based on closeness with near objects
             queried_objs = filter_closeness(queried_objs, close_objs, min_dist=3, negate=False)
+        # Else filter with agent location
+        elif len(queried_objs) != 0:
+            agent_coords = self.env.unwrapped.agent_pos
+            queried_objs.sort(key=lambda x: abs(agent_coords[0] - x[0][0]) + abs(agent_coords[1] - x[0][1]))
         
-        return queried_objs
+        # Filter our repeated objects
+        queried_objs = unique_filter(queried_objs)
 
+        return queried_objs
     def find_all_objects(self):
         grid, visibility_mask, observed_mask, tile_size = self.env.grid.grid, self.env.visible_grid, self.env.observed_absolute_map, self.env.tile_size
 
@@ -331,7 +364,7 @@ class DialogProcessing():
         observed_objects = {"door": [], "victim": [], "key": []}
         visible_objects = {"door": [], "victim": [], "key": []}
         for i, (obj, isVisible, wasObserved) in enumerate(zip(grid, visibility_mask, observed_mask)):
-            coords = (i%w * tile_size + tile_size // 2, i//w * tile_size - tile_size // 2)
+            coords = (i%w, i//w)#(i%w * tile_size + tile_size // 2, i//w * tile_size - tile_size // 2)
             if isinstance(obj, gym_minigrid.minigrid.Goal) and obj not in visible_objects["victim"]:
                 if isVisible:
                     visible_objects["victim"].append([coords, obj])
@@ -373,7 +406,6 @@ class DialogProcessing():
 
         items = []
         get_words(node.children, items)
-        print(items)
 
         # Determine the object and its propoerties
         for word in items:
