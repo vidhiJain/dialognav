@@ -155,7 +155,6 @@ def run_malmo(agent_host, env, minigrid_obs, planner_agent, minigrid_window, goa
             time.sleep(0.1)
         print()
         # action_list = get_actions(env, planner_agent)
-        pdb.set_trace()
         minigrid_action, action = planner_agent.Act(goal_id, minigrid_obs, action_type="malmo")
         minigrid_obs = take_minigrid_action(env, minigrid_action, minigrid_window)
         while world_state.is_mission_running and action!="done":

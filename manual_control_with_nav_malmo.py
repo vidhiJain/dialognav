@@ -12,6 +12,7 @@ import planner
 import pdb
 from dailog import process_dialog
 from run_planner_malmo import *
+from copy import deepcopy as dc
 
 def redraw(img):
     # if not args.agent_view:
@@ -129,6 +130,7 @@ malmo_agent_host = start_malmo_env()
 # ------------------------------------------------
 def start_dialog(env, window=None):
     obs = env.reset()
+    obs_temp = dc(obs)
     #this observation is just passed to intialise the parameters of the planner.
     agent = planner.astar_planner(obs)
 
@@ -136,7 +138,7 @@ def start_dialog(env, window=None):
         ip = input(">> ").lower().strip()
         if ip == "quit":
             break
-        response = process_dialog(ip, malmo_agent_host, agent, env, obs, window)
+        response = process_dialog(ip, malmo_agent_host, agent, env, window)
         print(response)
     print("Done")
 

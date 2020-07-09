@@ -279,6 +279,7 @@ class astar_planner:
         
         #if we had found the plan till the goal, append a -1 at the end. This is used as done.
         if self.worldMap[currentPosition[0],currentPosition[1]] == goal:
+            actionList.pop()
             actionList.append(-1)
 
         #actionList right now is is the correct order. However, since we are popping an action everytime we call Act, I reversed the order below.
@@ -306,20 +307,6 @@ class astar_planner:
 
         return actionList
     
-    def minigrid_action_to_malmo(self, minigrid_action):
-        if(minigrid_action==0):
-            action = 'turn -1'
-        elif(minigrid_action==1):
-            action = 'turn 1'
-        elif(minigrid_action==2):
-            action = 'move 1'
-        elif(minigrid_action==5):
-            action = 'attack 1'
-            # action = 'use 1'
-        elif(minigrid_action==-1):
-            action = 'done'
-
-        return action
         
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
