@@ -335,14 +335,13 @@ class astar_planner:
 
         #if we have already tken maxSteps with the last plan, get a new plan with most recent observations.
         if self.steps == self.maxSteps or not self.actionList:
-            print("replanning")
+            print("Planning a path ...")
             self.openList = PriorityQueue()
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
             self.steps = 0
             self.actionList = self.PathToAction(path, obs['direction'], goal)
-            
             if(action_type=="malmo"):
                 self.malmo_actionList = self.minigrid_actions_to_malmo(self.actionList)
 

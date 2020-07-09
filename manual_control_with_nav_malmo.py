@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+import sys
+sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
+
 import time
 import argparse
 import numpy as np
@@ -12,6 +16,8 @@ import planner
 import pdb
 from dailog import process_dialog
 from run_planner_malmo import *
+
+from dialog_v2 import DialogProcessing
 
 def redraw(img):
     # if not args.agent_view:
@@ -125,19 +131,38 @@ reset()
 
 # Blocking event loop
 window.show(block=False)
-malmo_agent_host = start_malmo_env()
+malmo_agent_host = None#start_malmo_env()
 # ------------------------------------------------
-def start_dialog(env, window=None):
+# def start_dialog(env, window=None):
+#     obs = env.reset()
+#     #this observation is just passed to intialise the parameters of the planner.
+#     agent = planner.astar_planner(obs)
+
+#     while True:
+#         ip = input(">> ").lower().strip()
+#         print(ip)
+#         if ip == "quit":
+#             break
+#         response = process_dialog(ip, malmo_agent_host, agent, env, obs, window)
+#         print(response)
+#     print("Done")
+
+# start_dialog(env, window)
+
+
+def start_dialog(env, malmo_agent_host, window):
     obs = env.reset()
     #this observation is just passed to intialise the parameters of the planner.
     agent = planner.astar_planner(obs)
-
+    dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)
+    
     while True:
         ip = input(">> ").lower().strip()
+        print(ip)
         if ip == "quit":
             break
-        response = process_dialog(ip, malmo_agent_host, agent, env, obs, window)
+        response = dp.process_dialog(ip)
         print(response)
     print("Done")
 
-start_dialog(env, window)
+start_dialog(env, malmo_agent_host, window)

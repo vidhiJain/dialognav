@@ -14,7 +14,7 @@ discovered =  {"previous_subject": None, "victim": {}, "door": {}, "key": {}}
 
 def process_dialog(text, malmo_agent_host, agent, env, obs, window):
     # Identify dialog type
-    if("go to" or "triage" in text):
+    if("go to" in  text) or ("triage" in text):
         response = follow_nav_command(text, malmo_agent_host, agent, env, obs,  window)
     else:
         dialog_type = get_dialog_type(text)
@@ -45,31 +45,29 @@ def follow_nav_command(text, malmo_agent_host, agent, env, minigrid_obs, window)
     #     return response
     #****************************************************************
     # for iRepeat in range(1):
-    while not done:
-        # logger.info("Waiting for the mission to start")
+    # logger.info("Waiting for the mission to start")
+    world_state = malmo_agent_host.getWorldState()
+    
+    while not world_state.has_mission_begun:
         world_state = malmo_agent_host.getWorldState()
-        
-        while not world_state.has_mission_begun:
+        print(".", end="")
+        time.sleep(0.1)
+    print()
+    minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
+    minigrid_obs = take_minigrid_action(env, minigrid_action, window)
+    while world_state.is_mission_running and action!="done":
+        world_state = malmo_agent_host.getWorldState()
+        while world_state.number_of_video_frames_since_last_state < 1:
+            time.sleep(0.05)
             world_state = malmo_agent_host.getWorldState()
-            print(".", end="")
-            time.sleep(0.1)
-        print()
+        
+        world_state = malmo_agent_host.getWorldState()
+        print("action: {}".format(action))
+        malmo_agent_host.sendCommand(action)
         minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
         minigrid_obs = take_minigrid_action(env, minigrid_action, window)
-        while world_state.is_mission_running and action!="done":
-            world_state = malmo_agent_host.getWorldState()
-            while world_state.number_of_video_frames_since_last_state < 1:
-                time.sleep(0.05)
-                world_state = malmo_agent_host.getWorldState()
-            
-            world_state = malmo_agent_host.getWorldState()
-            print("action: {}".format(action))
-            malmo_agent_host.sendCommand(action)
-            minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
-            minigrid_obs = take_minigrid_action(env, minigrid_action, window)
-            time.sleep(0.2)
-        
-        done = True
+        time.sleep(0.2)
+    return
         
 
     #just get the current observation

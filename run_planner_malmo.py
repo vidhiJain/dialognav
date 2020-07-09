@@ -17,6 +17,9 @@ from __future__ import division # ----------------------------------------------
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ------------------------------------------------------------------------------------------------
 
+import sys
+sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
+
 from builtins import range
 from past.utils import old_div
 import MalmoPython
@@ -81,7 +84,6 @@ def take_minigrid_action(env, action, window):
         obs = env.gen_obs()
     else:
         obs, _, _, _ = env.step(action) # obs: minigrid observation
-        print("rendering stuff") 
         redraw(env, obs['image'], window)
         if(action==0):
             caption = "turn 90 anticlockwise"
@@ -115,7 +117,7 @@ def start_malmo_env():
     
     # start minigrid env
 
-    mission_xml_path = "/home/akshay/Desktop/Research/visdial_malmo/malmo_037_py36_zip/missions/usar.xml"
+    mission_xml_path = "usar.xml"
     validate = True
     my_mission = MalmoPython.MissionSpec(getMissionXML(mission_xml_path), validate)
     agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
@@ -179,6 +181,7 @@ def run_malmo(agent_host, env, minigrid_obs, planner_agent, minigrid_window, goa
             goal_id = int(input("goal id: "))
 
 def main():
+
     env, minigrid_obs, minigrid_window = start_minigrid_env()
     planner_agent = start_planner_agent(minigrid_obs)
     agent_host = start_malmo_env()

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    
+      <About>
+        <Summary>Run the maze!</Summary>
+      </About>
+      
+     <ServerSection>
+        <ServerHandlers>
+		<FileWorldGenerator src="/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Minecraft/run/saves/Singleplayer_new" />
+		<!--<FileWorldGenerator src="/home/akshay/Desktop/Research/visdial_malmo/malmo_037_py36_zip/Minecraft/run/saves/single_player_mission_v1" />-->
+            <ServerQuitFromTimeUp timeLimitMs="30000000"/>
+            <ServerQuitWhenAnyAgentFinishes />
+        </ServerHandlers>
+    </ServerSection>
+
+    <AgentSection>
+        <Name>Thor</Name>
+        <AgentStart>
+            <!--<Placement x="-2167.5" y="28.5" z="167.5"/> [> will be overwritten by MazeDecorator <]-->
+
+            <!--<Placement x="-2190.5" y="28.5" z="167.5" yaw="90"/> [> will be overwritten by MazeDecorator <]-->
+
+            <!--<Placement x="-2168.5" y="28.5" z="167.5" yaw="90"/> [> will be overwritten by MazeDecorator <]-->
+
+            <Placement x="-2133.5" y="52.5" z="175.5" yaw="90"/> <!-- will be overwritten by MazeDecorator -->
+        </AgentStart>
+	<AgentHandlers>
+	  <ObservationFromFullStats/>
+	  <ObservationFromGrid>
+	      <Grid name="floor13x13">
+		<min x="-6" y="0" z="-6"/>
+		<max x="6" y="0" z="6"/>
+	      </Grid>
+	  </ObservationFromGrid>
+            <VideoProducer want_depth="false">
+                <Width>640</Width>
+                <Height>480</Height>
+            </VideoProducer>
+	    <!--<ContinuousMovementCommands turnSpeedDegs="45" />-->
+	    <DiscreteMovementCommands/>
+            <AgentQuitFromTouchingBlockType>
+                <Block type="redstone_block"/>
+            </AgentQuitFromTouchingBlockType>
+        </AgentHandlers>
+    </AgentSection>
+  </Mission>
