@@ -16,6 +16,7 @@ import planner
 import pdb
 from dailog import process_dialog
 from run_planner_malmo import *
+from copy import deepcopy as dc
 
 from dialog_v2 import DialogProcessing
 
@@ -152,6 +153,7 @@ malmo_agent_host = None#start_malmo_env()
 
 def start_dialog(env, malmo_agent_host, window):
     obs = env.reset()
+    obs_temp = dc(obs)
     #this observation is just passed to intialise the parameters of the planner.
     agent = planner.astar_planner(obs)
     dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)

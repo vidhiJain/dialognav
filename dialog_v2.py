@@ -181,8 +181,8 @@ class DialogProcessing():
                 if word in dialog: return True
             return False
         
-        def queries_description(dialog):
-            for word in self
+        # def queries_description(dialog):
+        #     for word in self
 
         # Navigation Response
         if parsed_dialog['type'] == "action":
@@ -211,7 +211,7 @@ class DialogProcessing():
                         random.sample(self.RESPONSE_POS_WORDS, 1)[0],
                         ", ".join(str(i[0]) for i in relevant_objects)
                     )
-            elif queries_description(dialog):
+            else:
                 print(relevant_objects)
                 # Description of objects
                 oneObj = relevant_objects[0][1]

@@ -12,9 +12,11 @@ from run_planner_malmo import *
 
 discovered =  {"previous_subject": None, "victim": {}, "door": {}, "key": {}}
 
-def process_dialog(text, malmo_agent_host, agent, env, obs, window):
+def process_dialog(text, malmo_agent_host, agent, env, window):
     # Identify dialog type
-    if("go to" in  text) or ("triage" in text):
+    obs = env.gen_obs()
+    if("go to" in text) or ("triage" in text):
+        print("calling follow nav")
         response = follow_nav_command(text, malmo_agent_host, agent, env, obs,  window)
     else:
         dialog_type = get_dialog_type(text)
@@ -40,12 +42,6 @@ def follow_nav_command(text, malmo_agent_host, agent, env, minigrid_obs, window)
         goal_id = 5
         response = "key"
 
-    # if(len(actionList)==0):
-    #     response += " does not exist in the current env"
-    #     return response
-    #****************************************************************
-    # for iRepeat in range(1):
-    # logger.info("Waiting for the mission to start")
     world_state = malmo_agent_host.getWorldState()
     
     while not world_state.has_mission_begun:
@@ -53,8 +49,9 @@ def follow_nav_command(text, malmo_agent_host, agent, env, minigrid_obs, window)
         print(".", end="")
         time.sleep(0.1)
     print()
-    minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
-    minigrid_obs = take_minigrid_action(env, minigrid_action, window)
+    # minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
+    # minigrid_obs = take_minigrid_action(env, minigrid_action, window)
+    action = 0
     while world_state.is_mission_running and action!="done":
         world_state = malmo_agent_host.getWorldState()
         while world_state.number_of_video_frames_since_last_state < 1:
@@ -63,31 +60,12 @@ def follow_nav_command(text, malmo_agent_host, agent, env, minigrid_obs, window)
         
         world_state = malmo_agent_host.getWorldState()
         print("action: {}".format(action))
-        malmo_agent_host.sendCommand(action)
         minigrid_action, action = agent.Act(goal_id, minigrid_obs, action_type="malmo")
+        malmo_agent_host.sendCommand(action)
         minigrid_obs = take_minigrid_action(env, minigrid_action, window)
-        time.sleep(0.2)
-    return
+        time.sleep(0.5)
+    return ("target reached")
         
-
-    #just get the current observation
-    #***************************************************************
-
-    # minigrid_action, malmo_action= agent.Act(goal,obs,action_type="malmo") # action_list is in reverse order
-    # obs = env.gen_obs()
-    # while True:
-        # action = agent.Act(obs=obs, goal=goal, action_type="minigrid")
-        # if (action == -1):
-            # response += " we have reached the goal "
-            # return response
-        # if (action == None):
-            # response += " does not exist in the current env"
-            # return response
-        # obs, reward, done, info = env.step(action)
-        # if window is not None:
-            # img = env.render('rgb_array')
-            # window.show_img(img)
-
 def get_dialog_type(text):
     dialog_type = ""
 
