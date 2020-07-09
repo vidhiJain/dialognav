@@ -2,6 +2,33 @@ from queues import PriorityQueue
 import numpy as np
 import pdb
 
+# Map of agent direction indices to vectors
+DIR_TO_VEC = [
+    # Down (positive Y)
+    np.array((0, 1)),
+    # Pointing left (negative X)
+    np.array((-1, 0)),
+    # Up (negative Y)
+    np.array((0, -1)),
+    # Pointing right (positive X)
+    np.array((1, 0)),
+]
+
+DIR_TO_8_VEC = [
+    # Down (positive Y)
+    np.array((0, 1)),
+    np.array((-1, 1)),
+    # Pointing left (negative X)
+    np.array((-1, 0)),
+    np.array((-1, -1)),
+    # Up (negative Y)
+    np.array((0, -1)),
+    np.array((1, -1)),
+    # Pointing right (positive X)
+    np.array((1, 0)),
+    np.array((1, 1)),
+]
+
 class Node():
     def __init__(self, x, y):
         self.x = x
@@ -14,7 +41,7 @@ class Node():
         return self.g <= other.g
 
 class astar_planner:
-    def __init__(self, obs, gridConnection=4):
+    def __init__(self, obs, gridConnection=4, partial=True):
         """
         World Map should be a 2D array with:
         0 : free space
@@ -22,7 +49,16 @@ class astar_planner:
         2 : frontiers to explore
         3 : current position.
         """
-        self.worldMap = obs['image'][:,:,0]
+        self.partial = partial
+        if self.partial:
+            self.worldMap = obs['image_fov'][:,:,0]
+            self.color = obs['image_fov'][:,:,1]
+            self.state = obs['image_fov'][:,:,2]
+        else:
+            self.worldMap = obs['image'][:,:,0]
+            self.color = obs['image'][:,:,1]
+            self.state = obs['image'][:,:,2]
+
         self.visitedGoals = np.zeros((self.worldMap.shape[0], self.worldMap.shape[1]))
         self.state = obs['image'][:,:,2]
         self.rows = self.worldMap.shape[0] 
@@ -31,12 +67,39 @@ class astar_planner:
         self.openNodesList = {}
         self.epsilon = 1
         self.gridConnection = gridConnection
+        
         if self.gridConnection == 4: 
             self.dx = [-1, 0, 1, 0]
             self.dy = [0, -1, 0, 1]
-        if self.gridConnection == 8: 
+            self.dirToVec = [
+                        # Pointing left (negative X)
+                        np.array((-1, 0)),
+                        # Up (negative Y)
+                        np.array((0, -1)),
+                        # Pointing right (positive X)
+                        np.array((1, 0)),
+                        # Down (positive Y)
+                        np.array((0, 1)),
+                    ]
+
+        elif self.gridConnection == 8: 
             self.dx = [-1, -1, -1, 0, 0, 1, 1, 1]
             self.dy = [-1, 0, 1, -1, 1, -1, 0, 1]
+            self.dirToVec = [
+                        # Down (positive Y)
+                        np.array((0, 1)),
+                        np.array((-1, 1)),
+                        # Pointing left (negative X)
+                        np.array((-1, 0)),
+                        np.array((-1, -1)),
+                        # Up (negative Y)
+                        np.array((0, -1)),
+                        np.array((1, -1)),
+                        # Pointing right (positive X)
+                        np.array((1, 0)),
+                        np.array((1, 1)),
+                    ]
+        
         self.maxSteps = 20
         self.steps = 0
         self.actionList = []
@@ -53,7 +116,7 @@ class astar_planner:
         return 1.414
 
     def IsTerminal(self, node, goal):
-        if np.any(self.worldMap == goal) and self.worldMap[node.x,node.y] == goal and not self.visitedGoals[node.x][node.y]: return True #planning completed if goal is in the observed map and we have reached that goal.
+        if np.any(self.worldMap == goal) and not self.visitedGoals[node.x][node.y] and self.worldMap[node.x,node.y] == goal : return True #planning completed if goal is in the observed map and we have reached that goal.
         # elif (self.worldMap[node.x, node.y]==0 or (self.worldMap[node.x, node.y]==4 and self.state[node.x, node.y] == 1)) : return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
         elif (self.worldMap[node.x, node.y]==0): return True
         return False
@@ -66,7 +129,6 @@ class astar_planner:
         self.openList.put(self.startNode)
         self.openNodesList[self.CalculateKey(self.startNode.x, self.startNode.y)] = self.startNode
         self.goalPosLists = np.where(self.worldMap==2)
-
         while(not self.openList.empty()):
             currentNode = self.openList.pop()
             #if already popped, continue.
@@ -84,8 +146,7 @@ class astar_planner:
                 neighborX = currentNode.x+self.dx[idx]
                 neighborY = currentNode.y+self.dy[idx]
                 neighborKey = self.CalculateKey(neighborX,neighborY)
-                # pdb.set_trace()
-                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 4 or self.worldMap[neighborX][neighborY] == goal)):
+                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 0 or self.worldMap[neighborX][neighborY] == 4 or self.worldMap[neighborX][neighborY] == goal)):
                     #if neighboring node has been visited before, retrieve it, update it's g value and push it in the open list.
                     if neighborKey in self.openNodesList:
                         neighborNode = self.openNodesList[neighborKey]
@@ -279,7 +340,6 @@ class astar_planner:
         
         #if we had found the plan till the goal, append a -1 at the end. This is used as done.
         if self.worldMap[currentPosition[0],currentPosition[1]] == goal:
-            actionList.pop()
             actionList.append(-1)
 
         #actionList right now is is the correct order. However, since we are popping an action everytime we call Act, I reversed the order below.
@@ -307,50 +367,73 @@ class astar_planner:
 
         return actionList
     
-        
     #should be changed to incorporate partial observability.
     def IntegrateMap(self, obs):
-        self.worldMap = obs['image'][:,:,0]
-        self.state = obs['image'][:,:,2]
+        if self.partial:
+            self.worldMap = obs['image_fov'][:,:,0]
+            self.color = obs['image_fov'][:,:,1]
+            self.state = obs['image_fov'][:,:,2]
+        else:
+            self.worldMap = obs['image'][:,:,0]
+            self.color = obs['image'][:,:,1]
+            self.state = obs['image'][:,:,2]
         return
 
-    def Act(self, goal, obs=None, action_type="minigrid"):
+    def Act(self, goal, obs=None, yaw =0, action_type="minigrid", triage=True):
         #if partial observable, integrate the current map.
+        if(action_type=="malmo"):
+            if(obs['direction']==0):
+                yaw = 90
+            elif(obs['direction']==1):
+                yaw = 0
+            elif(obs['direction']==2):
+                yaw = 270
+            elif(obs['direction']==3):
+                yaw = 180
 
         if obs is not None:
             self.IntegrateMap(obs)
 
         #if we have already tken maxSteps with the last plan, get a new plan with most recent observations.
         if self.steps == self.maxSteps or not self.actionList:
-            print("Planning a path ...")
             self.openList = PriorityQueue()
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
             path = self.CalculatePath(goal)
+            # print('path ', path)
             self.steps = 0
+            # if(action_type=="minigrid"):
             self.actionList = self.PathToAction(path, obs['direction'], goal)
+            # print(self.actionList)
+            # elif(action_type=="malmo"):
             if(action_type=="malmo"):
-                self.malmo_actionList = self.minigrid_actions_to_malmo(self.actionList)
+                self.actionList = self.minigrid_actions_to_malmo(self.actionList)
+                # self.actionList = self.get_cardinal_action_commands(yaw, path)
+                return self.actionList
 
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
         #if the returned action is -1, then it means we have reached the goal.
         self.steps += 1
         action = self.actionList.pop()
-        
-        #if action = -1, we have reached the goal. find out which of the neighbors is goal and mark it visited.
-        if action == -1:
-            currentPos = np.where(self.worldMap == 10)
-            for idx in range(len(self.dx)):
-                neighborX = currentPos[0][0]+self.dx[idx]
-                neighborY = currentPos[1][0]+self.dy[idx]
-                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and self.worldMap[neighborX][neighborY] == goal):
-                    self.visitedGoals[neighborX][neighborY] = 1
 
-        if(action_type=="malmo"):
-            malmo_action = self.malmo_actionList.pop()
-            return action, malmo_action
-        else:
-            return action
+        #if we reached the goal, the goal is victim and we need to triage it : return 5.
+        #if we have reached a goal which is a victim and is triaged, return -1.
+        #if we have reached a goal which is not a victim, return -1. 
+        if action == -1:
+            currentAgentPos = np.where(self.worldMap == 10) #current position of the agent.
+            currentAgentDirection = obs['direction']
+            goalX = currentAgentPos[0][0] + self.dirToVec[currentAgentDirection][0]
+            goalY = currentAgentPos[1][0] + self.dirToVec[currentAgentDirection][1]
+            #only need to triage it if it has not been triaged yet. triaged color is white which is 8.
+            if goal == 8: 
+                if triage and self.color[goalX][goalY] != 8:
+                    return 5
+                if (not triage or (triage and self.color[goalX][goalY] == 8)):
+                    self.visitedGoals[goalX][goalY] = 1
+            else:
+                self.visitedGoals[goalX][goalY] = 1
+
+        return action
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
