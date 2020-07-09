@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 
-import sys
-sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
+# import sys
+# sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
 
 import time
 import argparse
@@ -116,7 +116,7 @@ parser.add_argument(
 
 # env = gym.make(args.env)
 env = gym.make('MiniGrid-MinimapForSparky-v0')
-env = VisdialWrapper(env, 8)
+env = VisdialWrapper(env, 8, agent_pos=(24,25))
 # env = FullyObsWrapper(env)
 
 # TO RECORD

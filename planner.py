@@ -340,6 +340,7 @@ class astar_planner:
         
         #if we had found the plan till the goal, append a -1 at the end. This is used as done.
         if self.worldMap[currentPosition[0],currentPosition[1]] == goal:
+            actionList.pop()
             actionList.append(-1)
 
         #actionList right now is is the correct order. However, since we are popping an action everytime we call Act, I reversed the order below.
@@ -407,9 +408,8 @@ class astar_planner:
             # print(self.actionList)
             # elif(action_type=="malmo"):
             if(action_type=="malmo"):
-                self.actionList = self.minigrid_actions_to_malmo(self.actionList)
+                self.malmo_actionList = self.minigrid_actions_to_malmo(self.actionList)
                 # self.actionList = self.get_cardinal_action_commands(yaw, path)
-                return self.actionList
 
         #the action list is in reverse order. We can pop the action list one by one. We do this till etiher the action list becomes empty or we take maximum number of steps.
         #if the returned action is -1, then it means we have reached the goal.
@@ -420,6 +420,7 @@ class astar_planner:
         #if we have reached a goal which is a victim and is triaged, return -1.
         #if we have reached a goal which is not a victim, return -1. 
         if action == -1:
+            triage = False
             currentAgentPos = np.where(self.worldMap == 10) #current position of the agent.
             currentAgentDirection = obs['direction']
             goalX = currentAgentPos[0][0] + self.dirToVec[currentAgentDirection][0]
@@ -432,8 +433,12 @@ class astar_planner:
                     self.visitedGoals[goalX][goalY] = 1
             else:
                 self.visitedGoals[goalX][goalY] = 1
-
-        return action
+        
+        if(action_type=="malmo"):
+            malmo_action = self.malmo_actionList.pop()
+            return action, malmo_action
+        else:
+            return action
         
 if __name__ == '__main__':
     worldMap = np.array([[0,0,0,0,0,0,0,0,0,0],
