@@ -440,3 +440,4 @@ class DialogProcessing():
         parsed_dialog["items"] = items
 
         return parsed_dialog
+    
