@@ -175,7 +175,7 @@ class DialogProcessing():
             minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
             # If malmo env 
             if self.malmo_agent is not None: 
-                print("a", action)
+                print("action: ", action)
                 self.malmo_agent.sendCommand(action)
             
             minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)

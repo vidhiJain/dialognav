@@ -189,10 +189,10 @@ class astar_planner:
         # goal_position = get_state_coord(solution_path.pop(0))
         while len(path) != 0:
             dest_pos = path.pop()
-            print("curr_pos, dest_pos: {} {}".format(curr_pos, dest_pos))
+            # print("curr_pos, dest_pos: {} {}".format(curr_pos, dest_pos))
             diff_x = dest_pos[0] - curr_pos[0]
             diff_z = dest_pos[1] - curr_pos[1]
-            print("diff : ({}, {})".format(diff_x, diff_z))
+            # print("diff : ({}, {})".format(diff_x, diff_z))
             if diff_x == 1:
                 dest_yaw = 270
                 if(curr_yaw!=dest_yaw):
