@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+import sys
+sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
+
 import time
 import argparse
 import numpy as np

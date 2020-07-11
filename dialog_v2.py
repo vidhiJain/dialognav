@@ -162,7 +162,7 @@ class DialogProcessing():
         # minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
         action = 0
         while action!="done":
-            # If malmo env 
+            # If malmo env
             if self.malmo_agent is not None:
                 if not world_state.is_mission_running:
                     break
@@ -173,9 +173,9 @@ class DialogProcessing():
                 
                 world_state = self.malmo_agent.getWorldState()
             minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
+
             # If malmo env 
-            if self.malmo_agent is not None: 
-                print("a", action)
+            if self.malmo_agent is not None:
                 self.malmo_agent.sendCommand(action)
             
             minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
@@ -237,8 +237,8 @@ class DialogProcessing():
                 if parsed_dialog["object"]["desc"][0] == "color":
                     ans = oneObj.color
                 elif parsed_dialog["object"]["desc"][0] == "state":
-                    ans = oneObj.is_open
-                response += "The {} of the {} is {}".format(
+                    ans = "open" if oneObj.is_open else "closed"
+                response += "The {} of the {} is {}!".format(
                     parsed_dialog["object"]["desc"][0],
                     parsed_dialog["object"]["name"],
                     ans
@@ -290,11 +290,9 @@ class DialogProcessing():
                 # Filter color
                 if desc in self.OBJECT_COLOR_WORDS:
                     queried_objs = filter_color(queried_objs, desc)
-                    print(queried_objs)
                 # Filter state
                 elif desc in self.OBJECT_STATE_WORDS:
                     queried_objs = filter_state(queried_objs, desc)
-                print(queried_objs)
             return queried_objs
 
         def filter_closeness(q_objs, c_objs, min_dist=3, negate=False):

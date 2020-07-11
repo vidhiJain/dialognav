@@ -116,7 +116,7 @@ def start_malmo_env():
     # start minigrid env
 
     # mission_xml_path = "usar.xml"
-    mission_xml_path = "/home/akshay/Desktop/Research/visdial_malmo/malmo_037_py36_zip/missions/usar.xml"
+    mission_xml_path = "usar.xml"
     validate = True
     my_mission = MalmoPython.MissionSpec(getMissionXML(mission_xml_path), validate)
     agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
