@@ -8,7 +8,7 @@
 6. cd ../
 
 ## Installing spacy for dialogs
-1.. pip install spacy
+1. pip install spacy
 2. spacy download en_core_web_sm
 
 ## Adding malmoutils.py and MalmoPython.so to Pythonpath
