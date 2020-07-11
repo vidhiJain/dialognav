@@ -1,4 +1,4 @@
-from queues import PriorityQueue
+from planner.queues import PriorityQueue
 import numpy as np
 import pdb
 

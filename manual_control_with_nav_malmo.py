@@ -12,7 +12,7 @@ import gym_minigrid
 from gym_minigrid.wrappers import VisdialWrapper, FullyObsWrapper
 from gym_minigrid.window import Window
 
-import planner
+from planner import *
 import pdb
 from dailog import process_dialog
 from run_planner_malmo import *
@@ -157,7 +157,7 @@ def start_dialog(env, malmo_agent_host, window):
     obs = env.reset()
     obs_temp = dc(obs)
     #this observation is just passed to intialise the parameters of the planner.
-    agent = planner.astar_planner(obs)
+    agent = astar_planner(obs)
     dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)
     os.system("clear")
     while True:
