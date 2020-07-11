@@ -8,7 +8,7 @@ import gym_minigrid
 from gym_minigrid.wrappers import VisdialWrapper, FullyObsWrapper
 from gym_minigrid.window import Window
 
-import planner
+from planner import *
 import pdb
 from dailog import process_dialog
 
@@ -128,7 +128,7 @@ window.show(block=False)
 def start_dialog(env, window=None):
     obs = env.reset()
     #this observation is just passed to intialise the parameters of the planner.
-    agent = planner.astar_planner(obs)
+    agent = astar_planner(obs)
 
     while True:
         ip = input(">> ").lower().strip()
