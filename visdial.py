@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-
-
-import sys
-sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
-
 import time
 import argparse
 import numpy as np
@@ -16,14 +11,14 @@ from gym_minigrid.index_mapping import OBJECT_TO_IDX
 from gym_minigrid.minigrid import *
 
 def redraw(img):
-    if not args.agent_view:
-        img = env.render('rgb_array') #, tile_size=args.tile_size)
+    # if not args.agent_view:
+    img = env.render('rgb_array') #, tile_size=args.tile_size)
 
     window.show_img(img)
 
 def reset():
-    if args.seed != -1:
-        env.seed(args.seed)
+    # if args.seed != -1:
+        # env.seed(args.seed)
 
     obs = env.reset()
     # print(obs['image'].shape)
@@ -273,17 +268,20 @@ parser.add_argument(
     action='store_true'
 )
 
-args = parser.parse_args()
+# args = parser.parse_args()
 
-env = gym.make(args.env)
-env = VisdialWrapper(env)
+# env = gym.make(args.env)
+env = gym.make('MiniGrid-MinimapForSparky-v0')
+env = VisdialWrapper(env, 8, agent_pos=(24,25))
+
+# env = FullyObsWrapper(env)
 # env = gym.wrappers.Monitor(env, "recording")
 #env = gym.wrappers.Monitor(env, "./vid", video_callable=lambda episode_id: True,force=True)
-if args.agent_view:
+# if args.agent_view:
     #env = RGBImgPartialObsWrapper(env)
-    env = ImgObsWrapper(env)
+    # env = ImgObsWrapper(env)
 
-window = Window('gym_minigrid - ' + args.env)
+window = Window('gym_minigrid - ' + 'minigrid-minimapforsparky-v0')
 window.reg_key_handler(key_handler)
 
 reset()

@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-
-
-import sys
-sys.path.append("/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Malmo/samples/Python_examples")
-
 import time
 import argparse
 import numpy as np
@@ -14,25 +9,19 @@ from gym_minigrid.window import Window
 
 from planner import *
 import pdb
-from dailog import process_dialog
-from run_planner_malmo import *
-from copy import deepcopy as dc
-
-from dialog_v2 import DialogProcessing
+from dialog.dialog_v2 import *
+from utils import *
 
 import os
 
 def redraw(img):
     # if not args.agent_view:
-        # img = env.render('rgb_array')
+    img = env.render('rgb_array')
     window.show_img(img)
 
 def reset():
-    # if args.seed != -1:
-        # env.seed(args.seed)
 
     obs = env.reset()
-    # print(obs['image'].shape)
 
     if hasattr(env, 'mission'):
         print('Mission: %s' % env.mission)
@@ -42,10 +31,7 @@ def reset():
 
 def step(action):
     obs, reward, done, info = env.step(action)
-    # print('step=%s, reward=%.2f' % (env.step_count, reward))
-
     if done:
-        # print('done!')
         reset()
         # env.put_obj(Goal('blue'), env.agent_pos[0], env.agent_pos[1])
     else:
@@ -136,26 +122,9 @@ reset()
 window.show(block=False)
 malmo_agent_host = start_malmo_env()
 # ------------------------------------------------
-# def start_dialog(env, window=None):
-#     obs = env.reset()
-#     #this observation is just passed to intialise the parameters of the planner.
-#     agent = planner.astar_planner(obs)
-
-#     while True:
-#         ip = input(">> ").lower().strip()
-#         print(ip)
-#         if ip == "quit":
-#             break
-#         response = process_dialog(ip, malmo_agent_host, agent, env, obs, window)
-#         print(response)
-#     print("Done")
-
-# start_dialog(env, window)
-
 
 def start_dialog(env, malmo_agent_host, window):
     obs = env.reset()
-    obs_temp = dc(obs)
     #this observation is just passed to intialise the parameters of the planner.
     agent = astar_planner(obs)
     dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)

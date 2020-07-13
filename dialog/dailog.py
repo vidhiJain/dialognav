@@ -8,7 +8,7 @@ import numpy as np
 import planner 
 import gym_minigrid
 from run_planner_malmo import *
-
+from utils import *
 
 discovered =  {"previous_subject": None, "victim": {}, "door": {}, "key": {}}
 

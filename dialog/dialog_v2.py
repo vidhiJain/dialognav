@@ -2,7 +2,7 @@ import spacy
 import gym_minigrid
 import random
 import time
-from run_planner_malmo import *
+from utils import *
 
 nlp = spacy.load("en_core_web_sm")
 

@@ -18,130 +18,17 @@ from __future__ import division # ----------------------------------------------
 # ------------------------------------------------------------------------------------------------
 
 
-from builtins import range
-from past.utils import old_div
-import MalmoPython
-import random
-import time
-import logging
-import struct
-import socket
 import os
 import sys
-import malmoutils
 import pdb
 import numpy as np
 import imageio
-import matplotlib.pyplot as plt
-from PIL import Image
-from PIL import ImageTk
 import os
-import argparse
-import sys 
-from datetime import datetime
-import csv
-import json
-import matplotlib.pyplot as plt
-import torch 
-import gym
-import random
-from gym_minigrid.register import env_list
-from gym_minigrid.minigrid import Grid, OBJECT_TO_IDX
-from gym_minigrid.window import Window
-import gym_minigrid.wrappers as wrappers
-import pdb
-import planner
+import time
 from utils import *
 
 OBS_TO_RECORD = ['xPos', 'zPos', 'yPos', 'yaw', 'pitch']
 
-def redraw(env, img, window):
-    img = env.render('rgb_array')
-    window.show_img(img)
-
-def start_minigrid_env():
-    env = gym.make('MiniGrid-MinimapForSparky-v0')
-    env = wrappers.VisdialWrapper(env)
-    obs = env.reset()
-    window = Window('gym_minigrid - ' + 'MiniGrid-MinimapForSparky-v0')
-    redraw(env, obs['image'], window)
-    return env, obs, window
-
-def start_planner_agent(obs):
-    agent = planner.astar_planner(obs)
-    return agent
-
-# def get_action(env, obs, agent, goal_id, window):
-    # goal = goal_id
-    # minigrid_action, malmo_action= agent.Act(goal,obs,action_type="malmo") # action_list is in reverse order
-    
-    # return minigrid_action, malmo_action
-
-def take_minigrid_action(env, action, window):
-    if(action==-1):
-        obs = env.gen_obs()
-    else:
-        obs, _, _, _ = env.step(action) # obs: minigrid observation
-        redraw(env, obs['image'], window)
-        if(action==0):
-            caption = "turn 90 anticlockwise"
-        elif(action==1):
-            caption = "turn 90 clockwise"
-        elif(action==2):
-            caption = "move forward"
-        elif(action==5):
-            caption = "toggle"
-        else:
-            caption = "task finished"
-
-        window.set_caption(caption)
-
-    return obs
-
-def start_malmo_env():
-
-    malmoutils.fix_print()
-    
-    # create agent host
-    agent_host = MalmoPython.AgentHost()
-    malmoutils.parse_command_line(agent_host)
-    
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG) # set to INFO if you want fewer messages
-
-    video_width = 640
-    video_height = 480
-    
-    # start minigrid env
-
-    # mission_xml_path = "usar.xml"
-    mission_xml_path = "usar.xml"
-    validate = True
-    my_mission = MalmoPython.MissionSpec(getMissionXML(mission_xml_path), validate)
-    agent_host.setObservationsPolicy(MalmoPython.ObservationsPolicy.LATEST_OBSERVATION_ONLY)
-    agent_host.setVideoPolicy(MalmoPython.VideoPolicy.LATEST_FRAME_ONLY)
-
-    if agent_host.receivedArgument("test"):
-        num_reps = 1
-    else:
-        num_reps = 30000
-
-    my_mission_record = MalmoPython.MissionRecordSpec()
-    
-    # starting mission
-    max_retries = 3
-    for retry in range(max_retries):
-        try:
-            agent_host.startMission(my_mission, my_mission_record )
-            break
-        except RuntimeError as e:
-            if retry == max_retries - 1:
-                logger.error("Error starting mission: %s" % e)
-                exit(1)
-            else:
-                time.sleep(2)
-    return agent_host 
 
 def run_malmo(agent_host, env, minigrid_obs, planner_agent, minigrid_window, goal_id):
     terminate_mission = False
