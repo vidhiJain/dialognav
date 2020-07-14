@@ -1,8 +1,14 @@
 import spacy
-import gym_minigrid
 import random
 import time
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import gym_minigrid
 from utils import *
+
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -57,15 +63,15 @@ class DialogProcessing():
         self.DESCRIPTION_WORDS = {"is", "are", "was", "list", "seen", "visible", "located", "found", "location", "position"}
 
 
-        self.OBJECT_WORDS = {"victim": "victim", "door": "door", "key": "key",
-            "victims": "victim", "keys": "key", "doors": "door"
+        self.OBJECT_WORDS = {"victim": "victim", "door": "door", "switch": "switch",
+            "victims": "victim", "switches": "switch", "doors": "door"
         }
         self.OBJECT_DESCRIPTION_WORDS = {"color": 0, "state": 1}
         self.OBJECT_STATE_WORDS = {"open": 0, "close": 1}
         self.OBJECT_COLOR_WORDS = {"red": 0, "brown": 1, "green": 2, "blue": 3, "yellow": 4} 
         self.OTHER_WORDS = {"many", "all", "front"}
         self.LOCATION_WORDS = {"where", "location", "position", "seen", "all", "located"}
-        self.PLURAL_WORDS = {"doors", "keys", "victims"}
+        self.PLURAL_WORDS = {"doors", "switches", "victims"}
 
         self.RESPONSE_POS_WORDS = {"found", "located", "seen", "discovered"}
         self.RESPONSE_MATCH_WORDS = {"matching", "potential"}
@@ -113,12 +119,8 @@ class DialogProcessing():
 
         doc = nlp(text)
         parseTree = self.parse_doc(doc)
-        # print("Parse Tree:\n", parseTree)
-        # print("------")
 
         items = self.get_items(parseTree.root)
-        # print("Items:\n", items)
-        # print("------")
 
         
         if (items["type"] is None) or ("object" not in items) or (items["object"]["name"] not in self.OBJECT_WORDS):
@@ -141,9 +143,9 @@ class DialogProcessing():
         elif object_name == "door":
             goal_id = 4
             response += "door"
-        elif object_name == "key":
+        elif object_name == "switch":
             goal_id = 5
-            response += "key" 
+            response += "switch" 
         
         minigrid_obs = self.env.gen_obs()
         done = False
@@ -361,8 +363,8 @@ class DialogProcessing():
         visibility_mask = visibility_mask.reshape(visibility_mask.size)
         observed_mask = observed_mask.reshape(observed_mask.size)
 
-        observed_objects = {"door": [], "victim": [], "key": []}
-        visible_objects = {"door": [], "victim": [], "key": []}
+        observed_objects = {"door": [], "victim": [], "switch": []}
+        visible_objects = {"door": [], "victim": [], "switch": []}
         for i, (obj, isVisible, wasObserved) in enumerate(zip(grid, visibility_mask, observed_mask)):
             coords = (i%w, i//w)#(i%w * tile_size + tile_size // 2, i//w * tile_size - tile_size // 2)
             if isinstance(obj, gym_minigrid.minigrid.Goal) and obj not in visible_objects["victim"]:
@@ -377,11 +379,11 @@ class DialogProcessing():
                 if wasObserved:
                     observed_objects["door"].append([coords, obj])
 
-            if isinstance(obj, gym_minigrid.minigrid.Key) and obj not in visible_objects["key"]:
+            if isinstance(obj, gym_minigrid.minigrid.Key) and obj not in visible_objects["switch"]:
                 if isVisible:
-                    visible_objects["key"].append([coords, obj])
+                    visible_objects["switch"].append([coords, obj])
                 if wasObserved:
-                    observed_objects["key"].append([coords, obj])
+                    observed_objects["switch"].append([coords, obj])
 
         return observed_objects, visible_objects
 
