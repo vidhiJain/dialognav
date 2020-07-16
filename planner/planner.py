@@ -100,7 +100,7 @@ class astar_planner:
                         np.array((1, 1)),
                     ]
         
-        self.maxSteps = 20
+        self.maxSteps = 10
         self.steps = 0
         self.actionList = []
 
@@ -154,7 +154,7 @@ class astar_planner:
                 neighborX = currentNode.x+self.dx[idx]
                 neighborY = currentNode.y+self.dy[idx]
                 neighborKey = self.CalculateKey(neighborX,neighborY)
-                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 0 or self.worldMap[neighborX][neighborY] == 4 or (not pointNav and self.worldMap[neighborX][neighborY] == goal[0]))):
+                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 0 or self.worldMap[neighborX][neighborY] == 4 or (not pointNav and self.worldMap[neighborX][neighborY] == goal[0]) or (pointNav and neighborX == goal[0] and neighborY == goal[1]))):
                     #if neighboring node has been visited before, retrieve it, update it's g value and push it in the open list.
                     if neighborKey in self.openNodesList:
                         neighborNode = self.openNodesList[neighborKey]
