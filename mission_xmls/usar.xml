@@ -7,8 +7,8 @@
       
      <ServerSection>
         <ServerHandlers>
-		<!--<FileWorldGenerator src="/home/aviral/Documents/MCDS/Capstone/visdial/malmo/Minecraft/run/saves/Singleplayer_new" />-->
-		<FileWorldGenerator src="/home/akshay/Malmo_dir/malmo_037_py36/Minecraft/run/saves/Singleplayer_new" />
+		<FileWorldGenerator src="/home/aviral/Documents/MCDS/Capstone/visdial/malmo_working/Minecraft/run/saves/Singleplayer_new" />
+		<!-- <FileWorldGenerator src="/home/akshay/Malmo_dir/malmo_037_py36/Minecraft/run/saves/Singleplayer_new" /> -->
 		<!--<FileWorldGenerator src="/home/akshay/Desktop/Research/visdial_malmo/malmo_037_py36_zip/Minecraft/run/saves/single_player_mission_v1" />-->
             <ServerQuitFromTimeUp timeLimitMs="30000000"/>
             <ServerQuitWhenAnyAgentFinishes />

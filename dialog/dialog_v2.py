@@ -4,9 +4,9 @@ import time
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import gym_minigrid
+from gym_minigrid.index_mapping import COLOR_TO_IDX, STATE_TO_IDX, malmo_object_to_index as MALMO_OBJECT_TO_INDEX
 from utils import *
 
 
@@ -75,6 +75,8 @@ class DialogProcessing():
 
         self.RESPONSE_POS_WORDS = {"found", "located", "seen", "discovered"}
         self.RESPONSE_MATCH_WORDS = {"matching", "potential"}
+        self.COLOR_MAP = {"yellow2": "blue", "inv_indianyellow": "yellow", "inv_blue": "blue"}
+        self.COLOR_MAP_INV = {"blue": "yellow2", "yellow": "inv_indianyellow"}# "blue": "inv_blue"}
         
         self.prev_subject = None
 
@@ -99,16 +101,25 @@ class DialogProcessing():
         return parseTree
 
     def adjust_text(self, text):
+        def locate_word(words, word):
+            try:
+                return words.index(word)
+            except:
+                return None
+
         # Lower case everything
-        text = text.lower()
+        words = text.lower().split(" ")
         
+        i = locate_word(words, "it")
+        if i is None: i = locate_word(words, "its")
+
         # Check for it and substitute with previous subject if found
-        if "it" in text or "its" in text or "it's" in text:
+        if i is not None:
             if self.prev_subject is not None:
-                text = text.replace("it", self.prev_subject)
+                words[i] = self.prev_subject
             else:
                 return -1
-        return text
+        return " ".join(words)
 
     def process_dialog(self, text):
         if len(text) < 3:
@@ -122,9 +133,18 @@ class DialogProcessing():
 
         items = self.get_items(parseTree.root)
 
-        
         if (items["type"] is None) or ("object" not in items) or (items["object"]["name"] not in self.OBJECT_WORDS):
-            return "Can not process the dialog!"
+
+            if items["type"] == 0:
+                return "Malformed query"
+            
+            elif "object" not in items:
+                if "items" in items and len(items["items"]) > 0:
+                    return "Item {} is not valid".format(items["items"][0])
+            elif items["object"]["name"] not in self.OBJECT_WORDS:
+                return "{} is not a valid object".format(items["object"]["name"])
+            else:
+                return "Malformed query"
         else:
             self.prev_subject = items["object"]["name"]
 
@@ -158,7 +178,6 @@ class DialogProcessing():
                 world_state = self.malmo_agent.getWorldState()
                 print(".", end="")
                 time.sleep(0.1)
-            print()
 
         # minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
         # minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
@@ -211,17 +230,18 @@ class DialogProcessing():
             relevant_objects = self.get_relevant_objects(parsed_dialog, observed_objects, visible_objects)
 
             if len(relevant_objects) == 0:
-                response += "No {} seen!".format(parsed_dialog["object"]["name"])
+                response += "No such {} seen!".format(parsed_dialog["object"]["name"])
                 return response
 
             # Answer the questions
             if queries_location(dialog):
                 # Location of object
                 if queries_multiple(dialog):
-                    response += "{} {} {} were {} at coordinates [X, Y]\n{}".format(
+                    response += "{} {} {} {} {} at coordinates [X, Y]\n{}".format(
                         len(relevant_objects),
                         random.sample(self.RESPONSE_MATCH_WORDS, 1)[0],
                         parsed_dialog["object"]["name"],
+                        "was" if len(relevant_objects) == 1 else "were",
                         random.sample(self.RESPONSE_POS_WORDS, 1)[0],
                         ", ".join(str(i[0]) for i in relevant_objects)
                     )
@@ -235,11 +255,20 @@ class DialogProcessing():
                 
                 # Description of objects
                 oneObj = relevant_objects[0][1]
-                
+                ans = None
                 if parsed_dialog["object"]["desc"][0] == "color":
-                    ans = oneObj.color
+                    ans = self.COLOR_MAP[oneObj.color]
                 elif parsed_dialog["object"]["desc"][0] == "state":
-                    ans = "open" if oneObj.is_open else "closed"
+                    if parsed_dialog["object"]["name"] == "door":
+                        ans = "open" if oneObj.is_open else "closed"
+
+                    elif parsed_dialog["object"]["name"] == "swtich":
+                        return "Need to modify minigrid!"
+                        #ans = "on" if oneObj.is_open else "off"
+
+                if ans is None:
+                    return "{} does not have an attribute {}".format(parsed_dialog["object"]["name"], parsed_dialog["object"]["desc"][0])
+                
                 response += "The {} of the {} is {}!".format(
                     parsed_dialog["object"]["desc"][0],
                     parsed_dialog["object"]["name"],
@@ -290,8 +319,8 @@ class DialogProcessing():
         def filter_obj(obj, queried_objs):
             for desc in obj["desc"]:
                 # Filter color
-                if desc in self.OBJECT_COLOR_WORDS:
-                    queried_objs = filter_color(queried_objs, desc)
+                if desc in self.COLOR_MAP_INV:
+                    queried_objs = filter_color(queried_objs,  self.COLOR_MAP_INV[desc])
                 # Filter state
                 elif desc in self.OBJECT_STATE_WORDS:
                     queried_objs = filter_state(queried_objs, desc)
@@ -425,7 +454,7 @@ class DialogProcessing():
                     print("Parsed Items", items)
                     raise ValueError("Invalid case!")
 
-            elif word in self.OBJECT_DESCRIPTION_WORDS or word in self.OBJECT_COLOR_WORDS \
+            elif word in self.OBJECT_DESCRIPTION_WORDS or word in self.COLOR_MAP_INV \
                 or word in self.OBJECT_STATE_WORDS or word in self.OTHER_WORDS:
 
                 if "object" not in parsed_dialog:

@@ -17,6 +17,7 @@ import MalmoPython
 import logging
 import struct
 import socket
+import time
 
 ## generic functions
 def write_to_csv(text,file_name):

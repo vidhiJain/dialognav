@@ -135,6 +135,5 @@ def start_dialog(env, malmo_agent_host, window):
             break
         response = dp.process_dialog(ip)
         print(response)
-    print("Done")
 
 start_dialog(env, malmo_agent_host, window)
