@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import time
 import argparse
 import numpy as np
@@ -10,11 +9,12 @@ from gym_minigrid.window import Window
 
 from planner import *
 import pdb
-from dailog import process_dialog
+# from dialog.dailog import process_dialog
+from dialog.dialog_v2 import DialogProcessing
 
 def redraw(img):
-    if not args.agent_view:
-        img = env.render('rgb_array')
+    # if not args.agent_view:
+    img = env.render('rgb_array')
     window.show_img(img)
 
 def reset():
@@ -129,12 +129,15 @@ def start_dialog(env, window=None):
     obs = env.reset()
     #this observation is just passed to intialise the parameters of the planner.
     agent = astar_planner(obs)
-
+    malmo_agent_host = None
+    dp = DialogProcessing(agent=agent, env=env, malmo_agent=malmo_agent_host, window=window)
+    
     while True:
         ip = input(">> ").lower().strip()
         if ip == "quit":
             break
-        response = process_dialog(ip, agent, env, window)
+        # response = process_dialog(ip, agent, env, window)
+        response = dp.process_dialog(ip)
         print(response)
     print("Done")
 
