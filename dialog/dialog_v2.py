@@ -59,7 +59,7 @@ class DialogProcessing():
         self.window = window
 
         self.ACCEPTED_POS = set(["NOUN", "ADP", "ADJ", "VERB", "ADV"])
-        self.ACTION_WORDS = {"go", "locate", "search", "find"}
+        self.ACTION_WORDS = {"go", "locate", "search", "find", "move", "turn"}
         self.DESCRIPTION_WORDS = {"is", "are", "was", "list", "seen", "visible", "located", "found", "location", "position"}
 
 
@@ -132,13 +132,17 @@ class DialogProcessing():
         parseTree = self.parse_doc(doc)
 
         items = self.get_items(parseTree.root)
-
+        items["text"] = text
+        print(parseTree)
+        print(items)
+        
         if (items["type"] is None) or ("object" not in items) or (items["object"]["name"] not in self.OBJECT_WORDS):
 
-            if items["type"] == 0:
+            if items["type"] is None:
                 return "Malformed query"
-            
-            elif "object" not in items:
+            elif "to" in items["items"]:
+                pass
+            elif ("object" not in items):
                 if "items" in items and len(items["items"]) > 0:
                     return "Item {} is not valid".format(items["items"][0])
             elif items["object"]["name"] not in self.OBJECT_WORDS:
@@ -152,24 +156,61 @@ class DialogProcessing():
 
         return response
 
+
+    def get_object_id(self, object_name):
+        if object_name == "victim":
+            goal_id = OBJECT_TO_IDX["goal"]
+        elif object_name == "door":
+            goal_id = OBJECT_TO_IDX["door"]
+        elif object_name == "switch":
+            goal_id = OBJECT_TO_IDX["key"]
+            # response += "switch"
+        return goal_id
+
     def navigation_command(self, parsed_dialog):
- 
+        
+        def get_coords(words):
+            hasCoords = False
+            x, y = None, None
+            try: x = int(words[-2])
+            except: pass
+            try: y = int(words[-1])
+            except: pass
+            if (x is not None) and (y is not None):
+                hasCoords = True
+            return hasCoords, (x, y)
+
         response = ""
 
-        object_name = parsed_dialog["object"]["name"]
-        if object_name == "victim":
-            goal_id = 8
-            response += "victim"
-        elif object_name == "door":
-            goal_id = 4
-            response += "door"
-        elif object_name == "switch":
-            goal_id = 5
-            response += "switch" 
+
+        words = parsed_dialog["text"].split(" ")
+        hasCoords, coords = get_coords(words)
+
+        if not hasCoords:
+            object_name = parsed_dialog["object"]["name"]
+            obj_id = self.get_object_id(object_name)
+            state = None
+            color = None
+            desc = None
+
+            if "object" in parsed_dialog:
+                desc = None if len(parsed_dialog["object"]["desc"]) == 0 else parsed_dialog["object"]["desc"][0]
+            if desc is not None:
+                if desc in self.OBJECT_COLOR_WORDS:
+                    color = COLOR_TO_IDX[desc]
+                elif desc in self.OBJECT_STATE_WORDS:
+                    state = STATE_TO_IDX[desc]
+            
+            goal_id = (obj_id, color, state)
+            response += object_name
+        else:
+            goal_id = coords
+            response += str(coords)
         
         minigrid_obs = self.env.gen_obs()
         done = False
-
+        
+        print(goal_id)
         # If malmo env 
         if self.malmo_agent is not None:
             world_state = self.malmo_agent.getWorldState()
@@ -395,7 +436,7 @@ class DialogProcessing():
         observed_objects = {"door": [], "victim": [], "switch": []}
         visible_objects = {"door": [], "victim": [], "switch": []}
         for i, (obj, isVisible, wasObserved) in enumerate(zip(grid, visibility_mask, observed_mask)):
-            coords = (i%w, i//w)#(i%w * tile_size + tile_size // 2, i//w * tile_size - tile_size // 2)
+            coords = (i%w * tile_size + tile_size // 2, i//w * tile_size + tile_size // 2)#(i%w, i//w)#
             if isinstance(obj, gym_minigrid.minigrid.Goal) and obj not in visible_objects["victim"]:
                 if isVisible:
                     visible_objects["victim"].append([coords, obj])
@@ -455,7 +496,7 @@ class DialogProcessing():
                     raise ValueError("Invalid case!")
 
             elif word in self.OBJECT_DESCRIPTION_WORDS or word in self.COLOR_MAP_INV \
-                or word in self.OBJECT_STATE_WORDS or word in self.OTHER_WORDS:
+                or word in self.OBJECT_STATE_WORDS or word in self.OTHER_WORDS or word in self.OBJECT_COLOR_WORDS:
 
                 if "object" not in parsed_dialog:
                     # Main object not encountered yet
