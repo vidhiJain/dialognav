@@ -59,7 +59,8 @@ class DialogProcessing():
         self.window = window
 
         self.ACCEPTED_POS = set(["NOUN", "ADP", "ADJ", "VERB", "ADV"])
-        self.ACTION_WORDS = {"go", "locate", "search", "find", "move", "turn"}
+        self.ACTION_WORDS = {"locate", "search", "find", "move"}
+        self.NAVIGATION_WORDS = {"go", "turn", "take"}
         self.DESCRIPTION_WORDS = {"is", "are", "was", "list", "seen", "visible", "located", "found", "location", "position"}
 
 
@@ -133,23 +134,35 @@ class DialogProcessing():
 
         items = self.get_items(parseTree.root)
         items["text"] = text
-        print(parseTree)
-        print(items)
+        # print(parseTree)
+        # print(items)
         
-        if (items["type"] is None) or ("object" not in items) or (items["object"]["name"] not in self.OBJECT_WORDS):
-
-            if items["type"] is None:
-                return "Malformed query"
-            elif "to" in items["items"]:
-                pass
-            elif ("object" not in items):
+        if items["type"] is None:
+            return "Malformed query"
+        elif items["type"] == "description":
+            if ("object" not in items):
                 if "items" in items and len(items["items"]) > 0:
                     return "Item {} is not valid".format(items["items"][0])
+                else:
+                    return "No object specified"
             elif items["object"]["name"] not in self.OBJECT_WORDS:
                 return "{} is not a valid object".format(items["object"]["name"])
+
+        elif items["type"] == "action":
+            if items["root"] in {"move", "take", "turn", "go"}:
+                pass
             else:
-                return "Malformed query"
-        else:
+                if ("object" not in items):
+                    if "items" in items and len(items["items"]) > 0:
+                        return "Item {} is not valid".format(items["items"][0])
+                    else:
+                        return "No object specified"
+                elif items["object"]["name"] not in self.OBJECT_WORDS:
+                    return "{} is not a valid object".format(items["object"]["name"])
+        elif items["type"] == "navigation":
+            pass
+        
+        if ("object" in items) and (items["object"]["name"] != ""):
             self.prev_subject = items["object"]["name"]
 
         response = self.gen_response(items, text)
@@ -165,11 +178,53 @@ class DialogProcessing():
         elif object_name == "switch":
             goal_id = OBJECT_TO_IDX["key"]
             # response += "switch"
+        else:
+            goal_id = None
         return goal_id
+
+
+    def take_action(self, parsed_dialog):
+            minigrid_mapping = {
+                "left": 0,
+                "right": 1,
+                "steps": 2,
+            }
+            
+            malmo_mapping = {
+                "left": "turn -1",
+                "right": "turn 1",
+                "steps": "move 1",
+            }
+
+            minigrid_actions = []
+            malmo_actions = []
+            if parsed_dialog["root"] == "turn":
+                direction = parsed_dialog["text"].split(" ")[1]
+                minigrid_actions.append(minigrid_mapping[direction])
+                malmo_actions.append(malmo_mapping[direction])
+            else:
+                steps = int(parsed_dialog["text"].split(" ")[1])
+                for _ in range(steps):
+                    minigrid_actions.append(minigrid_mapping["steps"])
+                    malmo_actions.append(malmo_mapping["steps"])
+            
+            start_time = time.time()
+            for mini_action, malmo_action in zip(minigrid_actions, malmo_actions):
+                take_minigrid_action(self.env, mini_action, self.window)
+                if self.malmo_agent is not None:
+                    self.malmo_agent.sendCommand(malmo_action)
+                if time.time() - start_time > 15:
+                    return False
+            return True
+        
+
 
     def navigation_command(self, parsed_dialog):
         
-        def get_coords(words):
+        def get_coords(text):
+
+            words = text.split(" ")
+            # print(words)
             hasCoords = False
             x, y = None, None
             try: x = int(words[-2])
@@ -178,15 +233,16 @@ class DialogProcessing():
             except: pass
             if (x is not None) and (y is not None):
                 hasCoords = True
-            return hasCoords, (x, y)
-
+            tile_size = self.env.tile_size
+            if hasCoords:
+                return hasCoords, (x // tile_size, y // tile_size)
+            else:
+                return hasCoords, None
         response = ""
 
+        hasCoords, coords = get_coords(parsed_dialog["text"])
 
-        words = parsed_dialog["text"].split(" ")
-        hasCoords, coords = get_coords(words)
-
-        if not hasCoords:
+        if parsed_dialog["type"] == "action":
             object_name = parsed_dialog["object"]["name"]
             obj_id = self.get_object_id(object_name)
             state = None
@@ -197,21 +253,26 @@ class DialogProcessing():
                 desc = None if len(parsed_dialog["object"]["desc"]) == 0 else parsed_dialog["object"]["desc"][0]
             if desc is not None:
                 if desc in self.OBJECT_COLOR_WORDS:
-                    color = COLOR_TO_IDX[desc]
+                    color = COLOR_TO_IDX[self.COLOR_MAP_INV[desc]]
                 elif desc in self.OBJECT_STATE_WORDS:
                     state = STATE_TO_IDX[desc]
             
             goal_id = (obj_id, color, state)
             response += object_name
-        else:
-            goal_id = coords
-            response += str(coords)
+        elif parsed_dialog["type"] == "navigation":
+            if hasCoords:
+                goal_id = coords
+                response += str(coords)
+            else:
+                if self.take_action(parsed_dialog) == True:
+                    return "Done"
+                else:
+                    return "Timed out!"
         
         minigrid_obs = self.env.gen_obs()
         done = False
         
-        print(goal_id)
-        # If malmo env 
+        # If malmo env
         if self.malmo_agent is not None:
             world_state = self.malmo_agent.getWorldState()
 
@@ -223,6 +284,7 @@ class DialogProcessing():
         # minigrid_action, action = self.agent.Act(goal_id, minigrid_obs, action_type="malmo")
         # minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
         action = 0
+        start_time = time.time()
         while action!="done":
             # If malmo env
             if self.malmo_agent is not None:
@@ -242,8 +304,12 @@ class DialogProcessing():
             
             minigrid_obs = take_minigrid_action(self.env, minigrid_action, self.window)
             time.sleep(0.5)
-        
-        response += " was reached!"
+
+            if (time.time() - start_time) > 40:
+                response += " not found. Timed out!"
+                break
+        if action == "done":
+            response += " was reached!"
         return response 
 
     def gen_response(self, parsed_dialog, dialog):
@@ -261,7 +327,7 @@ class DialogProcessing():
         #     for word in self
 
         # Navigation Response
-        if parsed_dialog['type'] == "action":
+        if parsed_dialog['type'] == "action" or parsed_dialog['type'] == "navigation":
             response = self.navigation_command(parsed_dialog)
         else:
             # Dialog response
@@ -298,6 +364,7 @@ class DialogProcessing():
                 oneObj = relevant_objects[0][1]
                 ans = None
                 if parsed_dialog["object"]["desc"][0] == "color":
+                    # print(oneObj.color)
                     ans = self.COLOR_MAP[oneObj.color]
                 elif parsed_dialog["object"]["desc"][0] == "state":
                     if parsed_dialog["object"]["name"] == "door":
@@ -419,12 +486,17 @@ class DialogProcessing():
         # Else filter with agent location
         elif len(queried_objs) != 0:
             agent_coords = self.env.unwrapped.agent_pos
+            agent_coords = self.convert_coords(agent_coords)  
             queried_objs.sort(key=lambda x: abs(agent_coords[0] - x[0][0]) + abs(agent_coords[1] - x[0][1]))
         
         # Filter our repeated objects
         queried_objs = unique_filter(queried_objs)
 
         return queried_objs
+
+    def convert_coords(self, coords):
+        tile_size =  self.env.tile_size
+        return [coords[0]* tile_size, coords[1] * tile_size]
 
     def find_all_objects(self):
         grid, visibility_mask, observed_mask, tile_size = self.env.grid.grid, self.env.visible_grid, self.env.observed_absolute_map, self.env.tile_size
@@ -465,6 +537,8 @@ class DialogProcessing():
             parsed_dialog['type'] = "action"
         elif node.token in self.DESCRIPTION_WORDS:
             parsed_dialog['type'] = "description"
+        elif node.token in self.NAVIGATION_WORDS:
+            parsed_dialog['type'] = "navigation"
         else:
             # Invalid query
             parsed_dialog['type'] = None
