@@ -100,7 +100,7 @@ class astar_planner:
                         np.array((1, 1)),
                     ]
         
-        self.maxSteps = 20
+        self.maxSteps = 10
         self.steps = 0
         self.actionList = []
 
@@ -115,20 +115,28 @@ class astar_planner:
             return 1
         return 1.414
 
-    def IsTerminal(self, node, goal):
-        if np.any(self.worldMap == goal) and not self.visitedGoals[node.x][node.y] and self.worldMap[node.x,node.y] == goal : return True #planning completed if goal is in the observed map and we have reached that goal.
-        # elif (self.worldMap[node.x, node.y]==0 or (self.worldMap[node.x, node.y]==4 and self.state[node.x, node.y] == 1)) : return True #planning completed if goal is not in the observed map and we have reached a frontier or unexplored part of the map.
-        elif (self.worldMap[node.x, node.y]==0): return True
+    def IsTerminal(self, node, goal, pointNav):
+        if pointNav and node.x == goal[0] and node.y == goal[1]: return True
+
+        elif not pointNav:
+            if self.worldMap[node.x,node.y] == goal[0] and not self.visitedGoals[node.x][node.y]:
+                if goal[1] != None and goal[2] != None and self.color[node.x][node.y] == goal[1] and self.state[node.x][node.y] == goal[2]: return True
+                if goal[1] != None and goal[2] == None and self.color[node.x][node.y] == goal[1]: return True
+                if goal[1] == None and goal[2] != None and self.state[node.x][node.y] == goal[2]: return True
+                if goal[1] == None and goal[2] == None: return True
+            elif self.worldMap[node.x, node.y] == 0: return True
+        # if not self.visitedGoals[node.x][node.y] and self.worldMap[node.x,node.y] == goal : return True #planning completed if goal is in the observed map and we have reached that goal.
+        # elif (self.worldMap[node.x, node.y]==0): return True
+
         return False
 
-    def CalculatePath(self, goal):
+    def CalculatePath(self, goal, pointNav):
         #set paraneters of start and possible goal positions.
         self.startPos = np.where(self.worldMap==10)
         self.startNode = Node(self.startPos[0][0], self.startPos[1][0])
         self.startNode.g = 0
         self.openList.put(self.startNode)
         self.openNodesList[self.CalculateKey(self.startNode.x, self.startNode.y)] = self.startNode
-        self.goalPosLists = np.where(self.worldMap==2)
         while(not self.openList.empty()):
             currentNode = self.openList.pop()
             #if already popped, continue.
@@ -136,7 +144,7 @@ class astar_planner:
                 continue
 
             currentNode.closed = True
-            if (self.IsTerminal(currentNode, goal)):
+            if (self.IsTerminal(currentNode, goal, pointNav)):
                 #The path obtained here is in reverse order. The last coordinate in the path is the current position of the agent.
                 path = self.BacktracePath(currentNode) 
                 return path
@@ -146,7 +154,7 @@ class astar_planner:
                 neighborX = currentNode.x+self.dx[idx]
                 neighborY = currentNode.y+self.dy[idx]
                 neighborKey = self.CalculateKey(neighborX,neighborY)
-                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 0 or self.worldMap[neighborX][neighborY] == 4 or self.worldMap[neighborX][neighborY] == goal)):
+                if (neighborX>0 and neighborX<self.rows and neighborY>0 and neighborY<self.cols and (self.worldMap[neighborX][neighborY] == 1 or self.worldMap[neighborX][neighborY] == 0 or self.worldMap[neighborX][neighborY] == 4 or (not pointNav and self.worldMap[neighborX][neighborY] == goal[0]) or (pointNav and neighborX == goal[0] and neighborY == goal[1]))):
                     #if neighboring node has been visited before, retrieve it, update it's g value and push it in the open list.
                     if neighborKey in self.openNodesList:
                         neighborNode = self.openNodesList[neighborKey]
@@ -249,7 +257,7 @@ class astar_planner:
         return actions
 
     #minigrid path to actions. Does not work right now.
-    def PathToAction(self, path, agentDirection, goal):
+    def PathToAction(self, path, agentDirection, goal, pointNav):
         #the path obtained here is in reverse order. The last coordinate in the path is the current position of the agent.
         actionList = []
         currentPosition = path.pop()
@@ -339,8 +347,11 @@ class astar_planner:
             currentAgentDirection = nextAgentDirection
         
         #if we had found the plan till the goal, append a -1 at the end. This is used as done.
-        if self.worldMap[currentPosition[0],currentPosition[1]] == goal:
+        if not pointNav and self.worldMap[currentPosition[0],currentPosition[1]] == goal[0]:
             actionList.pop()
+            actionList.append(-1)
+
+        if pointNav and currentPosition[0] == goal[0] and currentPosition[1] == goal[1]:
             actionList.append(-1)
 
         #actionList right now is is the correct order. However, since we are popping an action everytime we call Act, I reversed the order below.
@@ -381,7 +392,12 @@ class astar_planner:
         return
 
     def Act(self, goal, obs=None, yaw =0, action_type="minigrid", triage=True):
-        #if partial observable, integrate the current map.
+        # pdb.set_trace()
+
+        #set pointNav charecteristics.
+        if len(goal) == 3: pointNav = False
+        else: pointNav = True
+
         if(action_type=="malmo"):
             if(obs['direction']==0):
                 yaw = 90
@@ -392,6 +408,7 @@ class astar_planner:
             elif(obs['direction']==3):
                 yaw = 180
 
+        #if partial observable, integrate the current map.
         if obs is not None:
             self.IntegrateMap(obs)
 
@@ -400,11 +417,11 @@ class astar_planner:
             self.openList = PriorityQueue()
             self.openNodesList = {}
             #the path returned from self.CalculatePath is in reverse order. The last coordinate would be the current position of the agent.
-            path = self.CalculatePath(goal)
+            path = self.CalculatePath(goal, pointNav)
             # print('path ', path)
             self.steps = 0
             # if(action_type=="minigrid"):
-            self.actionList = self.PathToAction(path, obs['direction'], goal)
+            self.actionList = self.PathToAction(path, obs['direction'], goal, pointNav)
             # print(self.actionList)
             # elif(action_type=="malmo"):
             if(action_type=="malmo"):
@@ -419,14 +436,14 @@ class astar_planner:
         #if we reached the goal, the goal is victim and we need to triage it : return 5.
         #if we have reached a goal which is a victim and is triaged, return -1.
         #if we have reached a goal which is not a victim, return -1. 
-        if action == -1:
+        if action == -1 and not pointNav:
             triage = False
             currentAgentPos = np.where(self.worldMap == 10) #current position of the agent.
             currentAgentDirection = obs['direction']
             goalX = currentAgentPos[0][0] + self.dirToVec[currentAgentDirection][0]
             goalY = currentAgentPos[1][0] + self.dirToVec[currentAgentDirection][1]
             #only need to triage it if it has not been triaged yet. triaged color is white which is 8.
-            if goal == 8: 
+            if goal[0] == 8: 
                 if triage and self.color[goalX][goalY] != 8:
                     return 5
                 if (not triage or (triage and self.color[goalX][goalY] == 8)):
