@@ -76,8 +76,8 @@ class DialogProcessing():
 
         self.RESPONSE_POS_WORDS = {"found", "located", "seen", "discovered"}
         self.RESPONSE_MATCH_WORDS = {"matching", "potential"}
-        self.COLOR_MAP = {"yellow2": "blue", "inv_indianyellow": "yellow", "inv_blue": "blue"}
-        self.COLOR_MAP_INV = {"blue": "yellow2", "yellow": "inv_indianyellow"}# "blue": "inv_blue"}
+        self.COLOR_MAP = {"yellow2": "blue", "inv_indianyellow": "yellow", "inv_blue": "blue", "inv_green2": "green"}
+        self.COLOR_MAP_INV = {"blue": "yellow2", "yellow": "inv_indianyellow", "green": "inv_green2"}# "blue": "inv_blue"}
         
         self.prev_subject = None
 
