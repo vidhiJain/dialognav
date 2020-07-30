@@ -349,6 +349,11 @@ class astar_planner:
         #if we had found the plan till the goal, append a -1 at the end. This is used as done.
         if not pointNav and self.worldMap[currentPosition[0],currentPosition[1]] == goal[0]:
             actionList.pop()
+            #if the goal is water, append a pickup option at the last time step.
+            if goal[0] == '11':
+                actionList.append(3)
+            if goal[1] == '9':
+                actionList.append(5)
             actionList.append(-1)
 
         if pointNav and currentPosition[0] == goal[0] and currentPosition[1] == goal[1]:
