@@ -9,7 +9,9 @@
 
 ## Installing spacy for dialogs
 1. pip install spacy
-2. spacy download en_core_web_sm
+<!-- 2. spacy download en_core_web_sm -->
+For vectorized token, doc and span as pre-trained language model, we need:
+2. python3 -m spacy download en_core_web_lg
 
 ## Adding malmoutils.py and MalmoPython.so to Pythonpath
 1. Locate the directory malmoutils.py and MalmoPython.so in your malmo installtion. (Usually at, <malmo_directory>/Python_Examples/)
