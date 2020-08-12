@@ -1,5 +1,7 @@
 # Data for future nearby locations
 # TODO: encode questions for past context.
+import pandas as pd
+import spacy
 
 train_data = {
     'door': [
@@ -54,3 +56,34 @@ test_data = {
         'Turn off the electricity',
     ]
 }
+
+def get_datalist_from_dict(data_dict):  #,lm):
+    """
+    data_dict: like train_data, test_data with 
+        key as target object and 
+        value as a list of language instructions
+    lm: language model (like spaCy). 
+        Ensure it is callable and 
+        returns object that has vector attribute
+    """
+
+    data = []
+    for key, values in data_dict.items():
+        for val in values:
+            data.append([val, key])
+    return data
+
+def to_csv(data, name):
+    """
+    data is a list or numpy array with each entry as a ['text', 'target']
+    """
+    df = pd.DataFrame(data)
+    df.to_csv(name, header=['text', 'target'], index=False) 
+    return df
+
+if __name__ == "__main__":
+    # nlp = spacy.load('en_core_web_sm')
+    train_list = get_datalist_from_dict(train_dat) #@, nlp)
+    train_df = to_csv(train_list, 'train_data.csv')
+    test_list = get_datalist_from_dict(test_data, nlp)
+    test_df = to_csv(test_list, 'test_data.csv')

@@ -1,0 +1,25 @@
+text,target
+Find next door,door
+Go to next door,door
+Check in next room,door
+Look for doors,door
+Can you locate any room?,door
+Can you locate any room nearby?,door
+Keep an eye for other doors,door
+Can you figure a way into the room?,door
+Can you locate any door nearby?,door
+Find next victim,goal
+Go search for other victims,goal
+Locate other victims,goal
+Check for other casualities,goal
+Have you seen any injured ones?,goal
+Check for other victims in the next room,goal
+Look for any injured victims,goal
+Can you locate any people?,goal
+Can you locate anyone?,goal
+Keep an eye for other casualities,goal
+Can you figure a way to reach other victims?,goal
+Can you locate any person nearby?,goal
+Find a light switch,key
+Locate a lever nearby,key
+Turn on the switch,key

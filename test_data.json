@@ -1,0 +1,20 @@
+{
+    "door": [
+        "Go to the next door",
+        "Can you find the next door",
+        "Let us check inside the next room",
+        "Keep an eye for other doors",
+        "Can you figure a way into the room?",
+        "Can you locate any door nearby?"
+    ],
+    "goal": [
+        "Search for next victim",
+        "Go search for other injured ones",
+        "Locate other affected"
+    ],
+    "key": [
+        "Look out for a light switch",
+        "Go to the nearest lever",
+        "Turn off the electricity"
+    ]
+}

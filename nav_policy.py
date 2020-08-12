@@ -3,11 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import gym
 import gym_minigrid
-# from gym_minigrid.wrappers import HumanFOVWrapper
-# from gym_minigrid.index_mapping import OBJECT_TO_IDX
+from gym_minigrid.wrappers import VisdialWrapperv2 #, HumanFOVWrapper
+from gym_minigrid.index_mapping import OBJECT_TO_IDX
 import spacy
 import numpy as np
-
+import matplotlib.pyplot as plt
 from data import train_data, test_data
 
 
@@ -48,21 +48,39 @@ class LanguageEmbedding(nn.Module):
 # TODO: Define Conv layer size for semantic map embedding
 class SemanticMapEmbedding(nn.Module):
     def __init__(self, output_dim, embedding_dim, num_objects, hidden_dim):
+        super(SemanticMapEmbedding, self).__init__()
+        self.embedding_dim = embedding_dim
         self.object_embedding = nn.Embedding(num_objects, embedding_dim)
-        self.flatout = nn.Flatten()
-        self.linear1 = nn.Linear(embedding_dim, hidden_dim)
+        # self.flatout = nn.Flatten()
+        
+        self.conv1 = nn.Conv2d(self.embedding_dim, 64, kernel_size=3, stride=1) #, padding, dilation)
+        self.conv2 = nn.Conv2d(64, 16, kernel_size=3, stride=2)
+        self.conv3 = nn.Conv2d(16, 8, kernel_size=3, stride=2)
+
+        self.linear1 = nn.Linear(1152, hidden_dim)
         self.linear2 = nn.Linear(hidden_dim, hidden_dim)
         self.linear3 = nn.Linear(hidden_dim, output_dim)
 
-        # self.conv1 = nn.Conv2d()
-        # self.conv2 = nn.Conv2d()
 
     def forward(self, x):
         # x is 50x50
+        batch_size = x.size()[0]
+        height = x.size()[1] 
+        width = x.size()[2]
+        x = x.view(batch_size, -1)
         x = self.object_embedding(x)
-        # x = F.relu(self.conv1(x))
-        # x = F.relu(self.conv2(x))
-        x = self.flatout(x)
+        
+        x = x.view(batch_size, height, width, self.embedding_dim)
+
+        x = x.permute(0, 3, 1, 2)
+
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+
+        x = x.view(batch_size, -1)
+        # To check the linear dim size in case network needs to be changed
+        # breakpoint()
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
         x = self.linear3(x)
@@ -70,19 +88,24 @@ class SemanticMapEmbedding(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, lang_dim, map_dim, hidden_dim=128, num_actions=4):
-        self.word_embedding = LanguageEmbedding()
-        self.spatial_embedding = SemanticMapEmbedding(lang_dim, len(OBJECT_TO_IDX))
+    def __init__(self, lang_dim, map_dim,
+            hidden_dim=128, num_actions=4):
+        super(Policy, self).__init__()
+        # self.word_embedding = LanguageEmbedding(lang_dim, lm_emb_dim)
+        # self.spatial_embedding = SemanticMapEmbedding(map_dim, num_objects)
 
         self.fc1 = nn.Linear(lang_dim + map_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, num_actions)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, num_actions)
 
-    def forward(self, human_instruction, semantic_map):
-        x1 = self.word_embedding(human_instruction)
-        x2 = self.spatial_embedding(semantic_map)
-        out = torch.cat([x1, x2])
+    def forward(self, x1, x2): # human_instruction, semantic_map):
+        # x1 = self.word_embedding(human_instruction)
+        # x2 = self.spatial_embedding(semantic_map)
+        # Add attend function!
+        out = torch.cat([x1, x2], axis=1)
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))
+        out = self.fc3(out)
         return out
         
 # def is_passable_coordinate(map_layout, coord_z, coord_x):
@@ -98,7 +121,7 @@ def is_passable_coordinate(grid, z, x):
     return False
 
 
-def is_passable_object(grid_item, impassable_objects=[4,30,9]):
+def is_passable_object(grid_item, impassable_objects=[2,30,9]):
     # TBD : needs updating
     # if grid_item in [9, 5, 2, 6]:  # ['air', 'fire', 'wooden_door'] 
     if grid_item in impassable_objects:
@@ -106,11 +129,38 @@ def is_passable_object(grid_item, impassable_objects=[4,30,9]):
     return True
 
 
-def get_path_matrix(map_layout, index):
-    # agent_pos
-    path_matrix = np.zeros(map_layout.shape) #, dtype=np.int32)
-    path_matrix[agent_pos[0], agent_pos[1]] = 1
-    queue = [[agent_pos[0], agent_pos[1]]]
+# def get_path_matrix(map_layout, index_0, index_1):
+#     # agent_pos
+#     path_matrix = np.zeros(map_layout.shape) #, dtype=np.int32)
+#     path_matrix[index_0, index_1] = 1
+#     queue = [[index_0, index_1]]
+
+#     while len(queue):
+#         coordinate = queue.pop(0)           
+#         # print('coordinate', coordinate)
+#         coord_z, coord_x  = coordinate
+#         # print('coord_z', coord_z, 'coord_x', coord_x)
+
+#         for diff in [-1, 1]:                
+#             if is_passable_coordinate(map_layout, coord_z + diff, coord_x):
+#                 # if path_matrix[coord_z + diff][coord_x] == 0:
+#                 if not (path_matrix[coord_z + diff][coord_x] or 0):
+#                     path_matrix[coord_z + diff][coord_x] =  path_matrix[coord_z][coord_x] + 1 # max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
+#                     queue.append([coord_z + diff, coord_x])
+
+#             if is_passable_coordinate(map_layout, coord_z, coord_x + diff):   
+#                 # if path_matrix[coord_z][coord_x + diff] == 0:
+#                 if not (path_matrix[coord_z][coord_x + diff] or 0):
+#                     path_matrix[coord_z][coord_x + diff] = path_matrix[coord_z][coord_x] + 1 # max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
+#                     queue.append([coord_z, coord_x + diff])
+
+#     return path_matrix
+
+def get_path_matrix(absolute_map, index_0, index_1, reward=100, discount_factor=0.99, time_penalty=0.01):
+    # import ipdb; ipdb.set_trace()
+    path_matrix = np.zeros(absolute_map.shape) #, dtype=np.int32)
+    path_matrix[index_0, index_1] = reward
+    queue = [[index_0, index_1]]
 
     while len(queue):
         coordinate = queue.pop(0)           
@@ -119,88 +169,202 @@ def get_path_matrix(map_layout, index):
         # print('coord_z', coord_z, 'coord_x', coord_x)
 
         for diff in [-1, 1]:                
-            if is_passable_coordinate(map_layout, coord_z + diff, coord_x):
+            if is_passable_coordinate(absolute_map, coord_z + diff, coord_x):
                 # if path_matrix[coord_z + diff][coord_x] == 0:
                 if not (path_matrix[coord_z + diff][coord_x] or 0):
-                    path_matrix[coord_z + diff][coord_x] =  path_matrix[coord_z][coord_x] + 1 # max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
+                    path_matrix[coord_z + diff][coord_x] =  max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
                     queue.append([coord_z + diff, coord_x])
 
-            if is_passable_coordinate(map_layout, coord_z, coord_x + diff):   
+            if is_passable_coordinate(absolute_map, coord_z, coord_x + diff):   
                 # if path_matrix[coord_z][coord_x + diff] == 0:
                 if not (path_matrix[coord_z][coord_x + diff] or 0):
-                    path_matrix[coord_z][coord_x + diff] = path_matrix[coord_z][coord_x] + 1 # max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
+                    path_matrix[coord_z][coord_x + diff] =  max(-1e-10, discount_factor * path_matrix[coord_z][coord_x] - time_penalty)
                     queue.append([coord_z, coord_x + diff])
 
     return path_matrix
 
 
-def get_solution_path(path_matrix, agent_pos):
+def get_value(path_matrix, coordinates):
+    return path_matrix[coordinates[1], coordinates[0]]
+
+
+def get_solution_path(path_matrix, env):
     values = []
-    for d in [-1, 1]:
-        values.append(path_matrix[agent_pos[0]+d, agent_pos[1]])
-        values.append(path_matrix[agent_pos[0], agent_pos[1]+d])
-    index = np.argmin(np.array(values))
-    return index
+    neighbour_value = np.array([get_value(path_matrix, env.left_pos), get_value(path_matrix, env.right_pos), 
+        get_value(path_matrix, env.front_pos), get_value(path_matrix, env.agent_pos)])
+    breakpoint()
+    indices = np.argwhere(neighbour_value == np.amax(neighbour_value))
+    print(indices)
+    
+    if 2 in indices:
+        return 2
+    
+    return np.random.choice(indices.reshape(-1)) 
+    # for d in [-1, 1]:
+    #     values.append(path_matrix[agent_pos[0]+d, agent_pos[1]])
+    #     values.append(path_matrix[agent_pos[0], agent_pos[1]+d])
+    # index = np.argmin(np.array(values))
+    # if agent_dir == 
+    # return index
 
 
-def action_path_plan(agent_pos, map_layout, target_index=2):
+def get_path_matrices_for_target(env, map_layout, target_index):
     # astar or DP (flood-fill)
     # DP (flood-fill)
     # If there is any door index then create its flood fill matrix and cache it
     # Based on all the matrices, we extract the subgoal which maximizes the value at current step of the agent.
     
-    # cache
-    indices = np.argwhere(map_layout == target_index)
-    path_matrices = []
-    for index in indices:
-        path_matrices.append(get_path_matrix(map_layout, index))
-    
-    value_at_agent_pos = np.array(len(path_matrices))
-    for matrix in path_matrices:
-        value_at_agent_pos = matrix[agent_pos[0], agent_pos[1]]
-    
-    index = np.argmin(value_at_agent_pos)
-    actions = get_solution_path(path_matrices[index], agent_pos)
-    # TODO: pass
-    return action
+    # cache path matrices!!!
+    # breakpoint()
 
+    indices = np.argwhere(map_layout == target_index)
+    
+    path_matrices = []
+    for i in range(indices.shape[0]):
+        path_matrices.append(get_path_matrix(map_layout, indices[i][0], indices[i][1]))
+    
+    if not len(path_matrices):
+        return None
+
+    # breakpoint()
+    return path_matrices
+
+
+def get_index(path_matrices, env, visited_list):
+    value_at_agent_pos = np.zeros(len(path_matrices))
+    for i, matrix in enumerate(path_matrices):
+        value_at_agent_pos[i] = matrix[env.agent_pos[0], env.agent_pos[1]]
+    
+    index = np.argmax(value_at_agent_pos)
+    return index
 
 def main(args):
+    num_steps = 5
+    visited_list = []
 
     device = torch.device("cuda" if args.use_cuda else "cpu")
     
     env = gym.make('MiniGrid-MinimapForSparky-v0')
-    # env = HumanFOVWrapper(env)
+    env = VisdialWrapperv2(env)
     obs = env.reset()
 
-    actual_map = env.grid.encode()[:,:,0]
+    actual_map = env.grid.encode()[:,:,0].T
+    nlp = spacy.load('en_core_web_sm')
+    embedding_dim = nlp('dummy text here').vector.shape[0]
+    
+    languageModel = LanguageEmbedding(output_dim=args.lang_emb_dim, embedding_dim=embedding_dim)
+    mappingModel = SemanticMapEmbedding(output_dim=args.map_emb_dim, embedding_dim=10, 
+        num_objects=len(OBJECT_TO_IDX), hidden_dim=128)
+    policyModel = Policy(args.lang_emb_dim, args.map_emb_dim)
 
-    model = Policy()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    def concat(list_of_generators):
+        for generator in list_of_generators:
+            yield from generator
+
+    model_params = concat([languageModel.parameters(), mappingModel.parameters(), policyModel.parameters()])
+    optimizer = torch.optim.Adam(model_params, lr=args.lr)
     criterion = nn.CrossEntropyLoss()
     # path_matrices = action_path_plan(agent_pos, map_layout, target_index=2)
     for step in range(args.epochs):
-        for target_obj, human_instruction in train_data.items():
-            belief_mask = env.observed_absolute_map 
-            semantic_map = belief_mask * actual_map
-            # Convert to torch 
-            semantic_map = torch.tensor(semantic_map).to(device)
+        for target_obj, human_instructions in train_data.items():
+            # path_matrices, index = action_path_plan(env,
+            #             actual_map,
+            #             # semantic_map,
+            #             OBJECT_TO_IDX[target_obj], 
+            #             visited_list)
+            path_matrices = get_path_matrices_for_target(env, actual_map, OBJECT_TO_IDX[target_obj])
+            index = get_index(path_matrices, env, visited_list)
+            for human_instruction in human_instructions:
+                print(human_instruction)
+                for step in range(num_steps):
+                    lang_vector = torch.tensor(nlp(human_instruction).vector).to(device).unsqueeze_(0)
+                    lang_embeds = languageModel(lang_vector)
+                    
+                    belief_mask = env.observed_absolute_map 
+                    semantic_map = belief_mask * actual_map
+                    # Convert to torch 
+                    semantic_map_tensor = torch.tensor(semantic_map).to(device).unsqueeze_(0).long() # Added until VecEnv are added in.
+                    map_embeds = mappingModel(semantic_map_tensor)
+                    # breakpoint()
 
-            # Expert action based on value estimate
-            expert_action = action_path_plan(semantic_map, OBJECT_TO_IDX[target_obj])
+                    # Expert action based on value estimate
+                    
+                    expert_action = get_solution_path(path_matrices[index], env)
 
-            # Predicted action by the model based on the map and instruction
-            predicted_action = model(human_instruction, semantic_map)
+                    if expert_action is None:
+                        print("Can't execute the command as not observed.")
+                        break 
+                    elif expert_action == 3:
+                        visited_list.append([env.agent_pos[1], env.agent_pos[0]])
+                        break
+                    expert_action = torch.tensor(expert_action).unsqueeze_(0)
+                    
+                    # Predicted action by the model based on the map and instruction
+                    
+                    optimizer.zero_grad()
+                    predicted_action_vec = policyModel(lang_embeds, map_embeds)
 
-            loss = criterion(predicted_action, expert_action)
+                    loss = criterion(predicted_action_vec, expert_action)
 
-            loss.backward()
-            optimizer.step()
+                    loss.backward()
+                    optimizer.step()
 
-            if args.save_model:
-                pass
-            if step % args.log_interval == 0:
-                pass
+                    if args.save_model:
+                        pass
+                    if step % args.log_interval == 0:
+                        pass
+
+                    # print(predicted_action_vec) 
+                    predicted_action = torch.argmax(predicted_action_vec, axis=1).item()
+                    
+                    print('expert_action', expert_action, 'predicted_action', predicted_action)
+                    if predicted_action == 3:
+                        # Done!
+                        break
+                    # Update the env with expert_action
+                    obs,_,_,_ = env.step(expert_action)
+                    # obs,_,_,_ = env.step(predicted_action)
+                    # Debug
+                    img = env.render()
+                    plt.subplot(121)
+                    plt.imshow(img)
+                    plt.subplot(122)
+                    plt.imshow(path_matrices[index], cmap='jet')
+                    plt.draw()
+                    plt.pause(0.05)
+
+
+
+def test_LanguageEmbedding(args):
+    nlp = spacy.load('en_core_web_sm')
+    embedding_dim = nlp('dummy text here').vector.shape[0]
+    output_dim = args.lang_emb_dim  
+    # print(embedding_dim)
+    model = LanguageEmbedding(output_dim, embedding_dim)
+    batch_size = args.batch_size
+    
+    x = [] 
+    for i, (item, sentences) in enumerate(test_data.items()):    
+        for sentence in sentences:
+            x.append(nlp(sentence).vector)
+    
+    x = torch.tensor(x)
+    out = model(x)
+    return out
+
+
+def test_SemanticMapEmbedding(args):
+    env = gym.make('MiniGrid-MinimapForSparky-v0')
+    # env = HumanFOVWrapper(env)
+    obs = env.reset()
+    actual_map = env.grid.encode()[:,:,0]
+    
+    # Feeding this to semantic map embedding network
+    model = SemanticMapEmbedding(output_dim=20, embedding_dim=10, num_objects=10, hidden_dim=128)
+    # breakpoint()
+    actual_map = torch.tensor([actual_map]*args.batch_size).long()
+    out = model(actual_map)
+    return out
 
 
 if __name__ == "__main__":
@@ -226,21 +390,14 @@ if __name__ == "__main__":
                         help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
+    parser.add_argument('--lang-emb-dim', type=int, default=10,
+                        help='For language embedding to be fed in Navigation Policy')
+    parser.add_argument('--map-emb-dim', type=int, default=20,
+                        help='For semantic map embedding to be fed in Navigation Policy')
     args = parser.parse_args()
-    # main(args)
-    nlp = spacy.load('en_core_web_sm')
-    embedding_dim = nlp('hello world').vector.shape[0]
-    # print(embedding_dim)
-    model = LanguageEmbedding(output_dim=5, embedding_dim=embedding_dim)
-    batch_size = args.batch_size
-    
-    x = [] 
-    for i, (item, sentences) in enumerate(test_data.items()):    
-        for sentence in sentences:
-            x.append(nlp(sentence).vector)
-    
-    x = torch.tensor(x)
-    out = model(x)
-    
+    main(args)
+    # out = test_LanguageEmbedding(args)
+    # out = test_SemanticMapEmbedding(args)
+
     breakpoint()
     print('done')

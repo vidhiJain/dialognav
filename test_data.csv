@@ -1,0 +1,13 @@
+text,target
+Go to the next door,door
+Can you find the next door,door
+Let us check inside the next room,door
+Keep an eye for other doors,door
+Can you figure a way into the room?,door
+Can you locate any door nearby?,door
+Search for next victim,goal
+Go search for other injured ones,goal
+Locate other affected,goal
+Look out for a light switch,key
+Go to the nearest lever,key
+Turn off the electricity,key
