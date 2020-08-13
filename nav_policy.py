@@ -9,7 +9,13 @@ import spacy
 import numpy as np
 import matplotlib.pyplot as plt
 from data import train_data, test_data
-
+ACTION_MAP = {
+    0: "Turning Left",
+    1: "Turning Right",
+    2: "Moving forward",
+    3: "Done!", 
+    4: "Turning back",
+}
 
 # TODO: train supervised way with object of interest classification, later replace with general sub-goal cluster labels
 # DONE: get pretrained language model
@@ -191,11 +197,14 @@ def get_value(path_matrix, coordinates):
 def get_solution_path(path_matrix, env):
     values = []
     neighbour_value = np.array([get_value(path_matrix, env.left_pos), get_value(path_matrix, env.right_pos), 
-        get_value(path_matrix, env.front_pos), get_value(path_matrix, env.agent_pos)])
-    breakpoint()
+        get_value(path_matrix, env.front_pos), get_value(path_matrix, env.agent_pos),
+        get_value(path_matrix, env.back_pos)])
     indices = np.argwhere(neighbour_value == np.amax(neighbour_value))
-    print(indices)
+    print("Expert's choices:", [ACTION_MAP[i[0]] for i in indices])
+    # breakpoint()
     
+    if 4 in indices:
+        return 0 # Arbitrarily turn left?!
     if 2 in indices:
         return 2
     
@@ -227,21 +236,23 @@ def get_path_matrices_for_target(env, map_layout, target_index):
         return None
 
     # breakpoint()
-    return path_matrices
+    return path_matrices, indices
 
 
-def get_index(path_matrices, env, visited_list):
+def get_index(path_matrices, env, remove_pos):
+
     value_at_agent_pos = np.zeros(len(path_matrices))
     for i, matrix in enumerate(path_matrices):
-        value_at_agent_pos[i] = matrix[env.agent_pos[0], env.agent_pos[1]]
+        if i not in remove_pos:
+            value_at_agent_pos[i] = matrix[env.agent_pos[1], env.agent_pos[0]]
     
     index = np.argmax(value_at_agent_pos)
     return index
 
 def main(args):
-    num_steps = 5
+    num_steps = 10
     visited_list = []
-
+    remove_pos = []
     device = torch.device("cuda" if args.use_cuda else "cpu")
     
     env = gym.make('MiniGrid-MinimapForSparky-v0')
@@ -265,18 +276,31 @@ def main(args):
     optimizer = torch.optim.Adam(model_params, lr=args.lr)
     criterion = nn.CrossEntropyLoss()
     # path_matrices = action_path_plan(agent_pos, map_layout, target_index=2)
-    for step in range(args.epochs):
-        for target_obj, human_instructions in train_data.items():
+    
+    for target_obj, human_instructions in test_data.items():
+        for step in range(args.epochs):
             # path_matrices, index = action_path_plan(env,
             #             actual_map,
             #             # semantic_map,
             #             OBJECT_TO_IDX[target_obj], 
             #             visited_list)
-            path_matrices = get_path_matrices_for_target(env, actual_map, OBJECT_TO_IDX[target_obj])
-            index = get_index(path_matrices, env, visited_list)
+            path_matrices, indices = get_path_matrices_for_target(env, actual_map, OBJECT_TO_IDX[target_obj])
+            # indices = np.delete(indices, visited_list).reshape(-1, 2)
+            # path_matrices = path_matrices.delete()
+            
+            for z,x in visited_list:
+                remove_pos.append(np.argwhere(np.logical_and(indices[:, 0]==z, indices[:, 1]==x)))
+            
+            index = get_index(path_matrices, env, remove_pos)
+
+            
             for human_instruction in human_instructions:
                 print(human_instruction)
+                # breakpoint()
+                done = False
+
                 for step in range(num_steps):
+
                     lang_vector = torch.tensor(nlp(human_instruction).vector).to(device).unsqueeze_(0)
                     lang_embeds = languageModel(lang_vector)
                     
@@ -295,8 +319,14 @@ def main(args):
                         print("Can't execute the command as not observed.")
                         break 
                     elif expert_action == 3:
-                        visited_list.append([env.agent_pos[1], env.agent_pos[0]])
-                        break
+                        if [env.agent_pos[1], env.agent_pos[0]] not in visited_list:
+                            visited_list.append([env.agent_pos[1], env.agent_pos[0]])
+                        
+                        for z,x in visited_list:
+                            remove_pos.append(np.argwhere(np.logical_and(indices[:, 0]==z, indices[:, 1]==x)))
+            
+                        index = get_index(path_matrices, env, remove_pos)
+                        done = True
                     expert_action = torch.tensor(expert_action).unsqueeze_(0)
                     
                     # Predicted action by the model based on the map and instruction
@@ -316,22 +346,43 @@ def main(args):
 
                     # print(predicted_action_vec) 
                     predicted_action = torch.argmax(predicted_action_vec, axis=1).item()
-                    
-                    print('expert_action', expert_action, 'predicted_action', predicted_action)
-                    if predicted_action == 3:
-                        # Done!
-                        break
+                    # breakpoint()
+
+                    print('expert_action:', ACTION_MAP[expert_action.item()])
+                    print('predicted_action:', ACTION_MAP[predicted_action])
+                    print('\n')
+                    # if predicted_action == 3:
+                    # if expert_action == 3:
+                    #     # Done!
+                    #     break
                     # Update the env with expert_action
                     obs,_,_,_ = env.step(expert_action)
                     # obs,_,_,_ = env.step(predicted_action)
                     # Debug
+                    t = 0.5
+                    if done: 
+                        response = "Done!"
+                        t = 1.5
+                    else: 
+                        response = "Going for it~"
+                        t = 0.2
                     img = env.render()
+                    plt.clf()
                     plt.subplot(121)
                     plt.imshow(img)
+                    plt.xticks([])
+                    plt.yticks([])
+                    plt.title('Map layout')
                     plt.subplot(122)
-                    plt.imshow(path_matrices[index], cmap='jet')
+                    im = plt.imshow(path_matrices[index], cmap='jet')
+                    plt.colorbar(im,fraction=0.046, pad=0.04)
+                    plt.xticks([])
+                    plt.yticks([])
+                    plt.title('Value matrix')
+                    plt.suptitle(f'Human: {human_instruction} \n Robot: {response}')
                     plt.draw()
-                    plt.pause(0.05)
+                    plt.pause(t)
+
 
 
 
@@ -374,7 +425,7 @@ if __name__ == "__main__":
                         help='input batch size for training (default: 64)')
     # parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
     #                     help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=14, metavar='N',
+    parser.add_argument('--epochs', type=int, default=1, metavar='N',
                         help='number of epochs to train (default: 14)')
     parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
                         help='learning rate (default: 1.0)')
