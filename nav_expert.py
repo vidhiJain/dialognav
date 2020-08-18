@@ -203,8 +203,8 @@ if __name__ == "__main__":
     }
 
 
-    env = gym.make('MiniGrid-MinimapForSparky-v0')
-    # env = gym.make('MiniGrid-MinimapForFalcon-v0')
+    # env = gym.make('MiniGrid-MinimapForSparky-v0')
+    env = gym.make('MiniGrid-MinimapForFalcon-v0')
     env = VisdialWrapperv2(env)
     
     obs = env.reset()
@@ -303,7 +303,11 @@ if __name__ == "__main__":
                 plt.title('Top down view of environment')
                 
                 belief_mask = env.observed_absolute_map 
-                visible_path_matrix = np.where(belief_mask, path_matrices[index], -1)
+                if flag_frontiers:
+                    visible_path_matrix = np.where(belief_mask, frontier_path_matrices[index], -1)
+                else:
+                    visible_path_matrix = np.where(belief_mask, path_matrices[index], -1)
+                target = f'frontier at {frontier_list[index]}' if flag_frontiers else target
                 plt.subplot(122)
                 plt.imshow(visible_path_matrix)
                 plt.title(f'visible path matrix for {target}')

@@ -22,6 +22,7 @@ train_data = {
         'Locate other victims now',
         'Check for other casualities',
         # 'Have you seen any injured ones?',
+        'Look for injured and save them',
         'Look for any injured victims',
         'Can you locate any people?',
         # 'Can you locate anyone?',
@@ -33,6 +34,8 @@ train_data = {
         'Find a light switch',
         'Locate a lever nearby',
         'Turn on the switch',
+        'Go to a lever', 
+        'Figure out how to turn on the light',
     ]
 }
 
