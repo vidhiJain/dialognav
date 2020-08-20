@@ -128,7 +128,7 @@ def movement(env, target_index, out, remove_pos):
 
 def plot(env, visible_path_matrix, target, sentence, response):
     plt.clf()
-    plt.figure(figsize=(10,4), dpi=100)
+    # plt.figure(figsize=(10,4), dpi=100)
     img = env.render()
     plt.subplot(121)
     plt.imshow(img)
@@ -156,11 +156,13 @@ def main():
     obs = env.reset()
     remove_pos = []
     flag_done = False
-    max_steps = 10
+    max_steps = 100
     
     while True:
         print('>> ')
         sentence = input()
+        if sentence == 'end':
+            break
         print('Human: ', sentence)
         try:
             out = classifier(sentence, candidate_labels)
@@ -176,10 +178,15 @@ def main():
         
         i = 0
         flag_done = False
+        prev_response = ''
         # breakpoint()
         while i < max_steps and not flag_done:
             visible_path_matrix, target, response, remove_pos, flag_done = movement(env, target_index, out, remove_pos)
-            print('Robot: ', response)
+            
+            if prev_response != response:
+                print('Robot: ', response)
+                prev_response = response
+
             plot(env, visible_path_matrix, target, sentence, response)
             print()
             i += 1
