@@ -1,5 +1,48 @@
 import numpy as np
 
+ACTION_MAP = {
+    0: "Turning Left",
+    1: "Turning Right",
+    2: "Moving forward",
+    3: "Done!", 
+    4: "Turning back",
+}
+candidate_labels = ["door", "room", 
+                    "injured", "victim", # "person", 
+                    "light switch", "lever", "switch", "electric switch", 
+                    "fire",
+                    "shovel", "pickaxe", "axe", "water"]
+
+OBJECT_MAP = {
+    'door': 'door',
+    'room': 'door', 
+    
+    'victim':  'goal',
+    'injured': 'goal',
+    'person': 'goal',
+
+    'light switch': 'key',
+    'lever': 'key',
+    'switch': 'key',
+    'electric switch': 'key',
+
+    'fire': 'lava', 
+    
+    'shovel': 'ball',
+    'pick axe': 'ball',
+    'axe': 'ball',
+    'water': 'ball'
+
+}
+
+CODE_TO_COMMON_MAP = {
+    'goal': ['victim', 'injured', 'casualities', 'who may need help', 'people', 'affected'], 
+    'key': ['switch', 'electric switch', 'lever', 'light switch'],
+    'door': ['door'],
+    'lava': ['fire', 'hazard'],
+    'ball': ['water', 'shovel', 'pickaxe', 'axe']
+}
+
 
 # def is_passable_coordinate(map_layout, coord_z, coord_x):
 def is_passable_coordinate(grid, z, x):
@@ -22,7 +65,7 @@ def is_passable_object(grid_item, impassable_objects=[2,30,9,-1]):
     return True
 
 
-def get_path_matrix(absolute_map, index_0, index_1, reward=100, discount_factor=0.99, time_penalty=0.01):
+def get_path_matrix(absolute_map, index_0, index_1, reward=2, discount_factor=0.99, time_penalty=0.01):
     # import ipdb; ipdb.set_trace()
     path_matrix = np.zeros(absolute_map.shape) #, dtype=np.int32)
     path_matrix[index_0, index_1] = reward
@@ -60,7 +103,7 @@ def get_solution_path(path_matrix, env):
         get_value(path_matrix, env.front_pos), get_value(path_matrix, env.agent_pos),
         get_value(path_matrix, env.back_pos)])
     indices = np.argwhere(neighbour_value == np.amax(neighbour_value))
-    print("Expert's choices:", [ACTION_MAP[i[0]] for i in indices])
+    # print("Expert's choices:", [ACTION_MAP[i[0]] for i in indices])
     # breakpoint()
     
     if 4 in indices:
@@ -135,7 +178,7 @@ def get_frontier_map(indices, semantic_map):
     return semantic_map
 
 
-def get_response(out, flag_done, flag_frontier, clarity_threshold=0.5): 
+def get_response(out, flag_done, flag_max_steps, flag_frontier, clarity_threshold=0.5): 
     name_list = CODE_TO_COMMON_MAP[OBJECT_MAP[out['labels'][0]]]
     if out['labels'][0] in name_list:
         target = out['labels'][0]
@@ -143,7 +186,12 @@ def get_response(out, flag_done, flag_frontier, clarity_threshold=0.5):
         target = name_list[0]
 
     if flag_done:
-        return "Done! I reached the " + target
+        if flag_max_steps:
+            return "I tried, but could not find any " + target
+        elif flag_frontier:
+            return "I reached an unseen area, but haven't found " + target + ". Should I continue to explore?"
+        else:    
+            return "Done! I reached the " + target
     if flag_frontier:
         return "I am searching for " + target + " in unexplored areas."
     if out['scores'][0] > clarity_threshold:
@@ -160,48 +208,14 @@ if __name__ == "__main__":
     import gym_minigrid
     from gym_minigrid.wrappers import VisdialWrapperv2
     from gym_minigrid.index_mapping import OBJECT_TO_IDX
-    from data import test_data, train_data
+    from data import test_data, train_data, demo_data
     from transformers import pipeline
     import matplotlib.pyplot as plt
     max_steps = 10
 
     classifier = pipeline("zero-shot-classification")
 
-    candidate_labels = ["door", "room", 
-                        "injured", "victim", # "person", 
-                        "light switch", "lever", "switch", "electric switch", 
-                        "fire"]
-
-    OBJECT_MAP = {
-        'door': 'door',
-        'room': 'door', 
-        
-        'victim':  'goal',
-        'injured': 'goal',
-        'person': 'goal',
-
-        'light switch': 'key',
-        'lever': 'key',
-        'switch': 'key',
-        'electric switch': 'key',
-
-        'fire': 'lava', 
-    }
-
-    CODE_TO_COMMON_MAP = {
-        'goal': ['victim', 'injured', 'casualities', 'who may need help', 'people', 'affected'], 
-        'key': ['switch', 'electric switch', 'lever', 'light switch'],
-        'door': ['door'],
-        'lava': ['fire', 'hazard'],
-    }
-    ACTION_MAP = {
-        0: "Turning Left",
-        1: "Turning Right",
-        2: "Moving forward",
-        3: "Done!", 
-        4: "Turning back",
-    }
-
+    
 
     # env = gym.make('MiniGrid-MinimapForSparky-v0')
     env = gym.make('MiniGrid-MinimapForFalcon-v0')
@@ -224,7 +238,7 @@ if __name__ == "__main__":
     remove_pos = []
     
     # semantic_map = belief_mask * actual_map
-    for target, sentences in train_data.items():
+    for target, sentences in demo_data.items():
         
         target_index = OBJECT_TO_IDX[target]
         gt_indices = np.argwhere(actual_map == target_index)
@@ -245,6 +259,7 @@ if __name__ == "__main__":
             
             i = 0
             flag_done = False
+            flag_max_steps = False
             # target_obj = 'goal'
             while not flag_done and i < max_steps:
 
@@ -289,18 +304,24 @@ if __name__ == "__main__":
                         # remove_pos.append(np.argwhere(np.logical_and(indices[:, 0]==z, indices[:, 1]==x)))
                     remove_pos.append(index)
                     flag_done = True
+                    
                     # breakpoint()
+                if i == max_steps-1:
+                    flag_max_steps = True    
 
                 obs, rew, done, info = env.step(expert_action)
                 
                 # breakpoint()
-                response = get_response(out, flag_done, flag_frontiers)
+                response = get_response(out, flag_done, flag_max_steps, flag_frontiers)
 
                 plt.clf()
+                plt.figure(figsize=(12,6), dpi=200)
                 img = env.render()
                 plt.subplot(121)
                 plt.imshow(img)
-                plt.title('Top down view of environment')
+                plt.xticks([])
+                plt.yticks([])
+                plt.title('Top down view')
                 
                 belief_mask = env.observed_absolute_map 
                 if flag_frontiers:
@@ -310,8 +331,10 @@ if __name__ == "__main__":
                 target = f'frontier at {frontier_list[index]}' if flag_frontiers else target
                 plt.subplot(122)
                 plt.imshow(visible_path_matrix)
-                plt.title(f'visible path matrix for {target}')
+                plt.title(f'Path matrix for {target}')
                 # plt.title("Human: " + sequence + "\n" + "Robot: " + response)
+                plt.xticks([])
+                plt.yticks([])
                 plt.suptitle(f"Human: {sequence} \n Robot: {response}")
                 plt.draw()
                 plt.pause(0.5)

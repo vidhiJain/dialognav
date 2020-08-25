@@ -5,6 +5,9 @@ import gym
 import gym_minigrid
 from gym_minigrid.wrappers import VisdialWrapperv2
 from gym_minigrid.index_mapping import OBJECT_TO_IDX
+
+from termcolor import colored
+
 max_steps = 10
 
 classifier = pipeline("zero-shot-classification")
@@ -128,14 +131,13 @@ def movement(env, target_index, out, remove_pos):
 
 def plot(env, visible_path_matrix, target, sentence, response):
     plt.clf()
-    # plt.figure(figsize=(10,4), dpi=100)
+    plt.figure(figsize=(10,4), dpi=100)
     img = env.render()
     plt.subplot(121)
     plt.imshow(img)
     plt.xticks([])
     plt.yticks([])
     plt.title('Top down view')
-    
     
     plt.subplot(122)
     plt.imshow(visible_path_matrix) #, cmap='jet')
@@ -151,23 +153,29 @@ def plot(env, visible_path_matrix, target, sentence, response):
 
 def main():
     env = gym.make('MiniGrid-MinimapForFalcon-v0')
+    # env = gym_minigrid.envs.MinimapForFalcon(agent_pos=(50, 30))
     env = VisdialWrapperv2(env)
 
     obs = env.reset()
     remove_pos = []
     flag_done = False
-    max_steps = 100
+    max_steps = 10
+
+    # Take some random actions for fun
+    for _ in range(5):
+        for i in [0, 2]:
+            env.step(i)
     
     while True:
         print('>> ')
         sentence = input()
         if sentence == 'end':
             break
-        print('Human: ', sentence)
+        print(colored(f'>> Human: {sentence}', 'red'))
         try:
             out = classifier(sentence, candidate_labels)
         except:
-            print("Didn't understand! Tell me where to go next.")
+            print("<< Robot: Didn't understand! Tell me where to go next.")
             continue
         # print('Robot understood :', out)
         # print(out)
@@ -184,11 +192,11 @@ def main():
             visible_path_matrix, target, response, remove_pos, flag_done = movement(env, target_index, out, remove_pos)
             
             if prev_response != response:
-                print('Robot: ', response)
+                print('<< Robot: ', response)
                 prev_response = response
 
             plot(env, visible_path_matrix, target, sentence, response)
-            print()
+            # print()
             i += 1
 
 if __name__ == "__main__":

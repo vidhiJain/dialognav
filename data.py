@@ -59,7 +59,22 @@ test_data = {
         'Turn off the electricity',
     ]
 }
+demo_data = {
+    # 'goal': ['Can you figure a way to save victims?'],
+    # 'door': [
+    #         'Check for other victims in the next room',
+    #         'Look for doors',
+    #         'Keep an eye for other doors',
+    #         ],
+    # 'key': [
+    #         'Look out for a light switch',
+    #         ],
+    'lava': [
+            'See if there are any fires in the building',
+            ]
 
+
+}
 def get_datalist_from_dict(data_dict):  #,lm):
     """
     data_dict: like train_data, test_data with 
