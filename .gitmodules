@@ -1,3 +1,9 @@
 [submodule "gym_minigrid"]
 	path = gym_minigrid
 	url = https://gitlab.com/cmu_asist/gym_minigrid.git
+[submodule "rl-starter-files"]
+	path = rl-starter-files
+	url = https://github.com/lcswillems/rl-starter-files.git
+[submodule "torch-ac"]
+	path = torch-ac
+	url = https://github.com/lcswillems/torch-ac.git
