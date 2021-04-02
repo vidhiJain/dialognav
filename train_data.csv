@@ -1,3 +1,4 @@
+instruction,target
 Find next door,door
 Go to next door,door
 Check in next room,door
@@ -7,18 +8,34 @@ Can you locate any room nearby?,door
 Keep an eye for other doors,door
 Can you figure a way into the room?,door
 Can you locate any door nearby?,door
-Find next victim,goal
-Go search for other victims,goal
-Locate other victims,goal
+Check for other victims in the next room,door
+Save the victims,goal
+Go search for other victims and triage them,goal
+Locate other victims now,goal
 Check for other casualities,goal
 Have you seen any injured ones?,goal
-Check for other victims in the next room,goal
+Look for injured and save them,goal
 Look for any injured victims,goal
 Can you locate any people?,goal
 Can you locate anyone?,goal
 Keep an eye for other casualities,goal
-Can you figure a way to reach other victims?,goal
+Can you figure a way to save victims?,goal
 Can you locate any person nearby?,goal
+Search and rescue any victims found,goal
 Find a light switch,key
 Locate a lever nearby,key
 Turn on the switch,key
+Go to a lever,key
+Figure out how to turn on the light,key
+check for fire near the light switch,key
+Check if there are any fires,lava
+Find if any fires,lava
+Search for fires if any,lava
+Look for fires and any smokes,lava
+Find if where is the smoke coming from,lava
+Follow smoke to find if any fire in the place,lava
+Search the area,unseen
+Explore this place,unseen
+Scan this,unseen
+Find more unexplored areas,unseen
+Search this place thoroughly,unseen

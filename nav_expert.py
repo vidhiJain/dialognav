@@ -70,12 +70,6 @@ def get_solution_path(path_matrix, env):
         return 2
     
     return np.random.choice(indices.reshape(-1)) 
-    # for d in [-1, 1]:
-    #     values.append(path_matrix[agent_pos[0]+d, agent_pos[1]])
-    #     values.append(path_matrix[agent_pos[0], agent_pos[1]+d])
-    # index = np.argmin(np.array(values))
-    # if agent_dir == 
-    # return index
 
 
 
@@ -151,14 +145,14 @@ def get_response(out, flag_done, flag_max_steps, flag_frontier, clarity_threshol
         else:    
             return "Done! I reached the " + target
     if flag_frontier:
-        return "I am searching for " + target + " in unexplored areas."
+        return "I am going for " + target + " towards the unexplored areas."
     if out['scores'][0] > clarity_threshold:
         response = "I am going for the nearest " + target
     else: 
         if out['labels'][0] in name_list and out['labels'][1] in name_list:
             response = "I am going for it."
         else:
-            response = "I am going for " + out['labels'][0] + ", but should I navigate to " + out['labels'][1]
+            response = "I am going for " + out['labels'][0] + ", but should I go to " + out['labels'][1]
     return response
 
 if __name__ == "__main__":

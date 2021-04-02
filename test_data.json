@@ -16,5 +16,15 @@
         "Look out for a light switch",
         "Go to the nearest lever",
         "Turn off the electricity"
+    ],
+    "lava": [
+        "Check if there are any fires",
+        "Find if any fires",
+        "Search for fires if any"
+    ],
+    "unseen":[
+        "Search the area",
+        "Explore this place",
+        "Scan this"
     ]
 }

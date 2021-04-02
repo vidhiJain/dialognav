@@ -29,8 +29,19 @@ def reset():
 
     redraw(obs)
 
+
+def onclick(event):
+    print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+          ('double' if event.dblclick else 'single', event.button,
+           event.x, event.y, event.xdata, event.ydata))
+    coord = round(event.xdata / args.tile_size), round(event.ydata / args.tile_size)
+    print(coord)
+
+
 def step(action):
     obs, reward, done, info = env.step(action)
+    # breakpoint()
+    # print(obs.keys())
     print('step=%s, reward=%.2f' % (env.step_count, reward))
 
     if done:
@@ -80,13 +91,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--env",
     help="gym environment to load",
-    default='MiniGrid-GoToDoor-8x8-v0'
+    default='MiniGrid-FourRoomsCluttered-v0'#'MiniGrid-MinimapForSparkySubmap-v0'  #'MiniGrid-GoToObject-10x10-N3-v0' #'MiniGrid-GoToObject-8x8-N2-v0' ## 'MiniGrid-MinimapForSparky-v0' #'MiniGrid-GoToDoor-8x8-v0'
 )
 parser.add_argument(
     "--seed",
     type=int,
     help="random seed to generate the environment with",
-    default=-1
+    default=100001
 )
 parser.add_argument(
     "-ms",
@@ -119,18 +130,18 @@ RESOURCES_DIR = (Path(__file__).parent).resolve()
 # env = gym_minigrid.envs.minimap.MinimapForSparky(
 #         raw_map_path=Path(RESOURCES_DIR, 'gym_minigrid/envs/resources/map_set_'+str(args.map_set_number)+'.npy')
 #     )
-# env = HumanFOVWrapper(env, agent_pos=(23, 14))
+env = HumanFOVWrapper(env, agent_pos=(23, 14))
 # env = InvertColorsWrapper(env)
 
 # env = gym.wrappers.Monitor(env, "recording")
 # env = gym.wrappers.Monitor(env, "./vid", video_callable=lambda episode_id: True,force=True)
-if args.agent_view:
-    # env = RGBImgPartialObsWrapper(env)
-    env = ImgObsWrapper(env)
+# if args.agent_view:
+#     # env = RGBImgPartialObsWrapper(env)
+#     env = ImgObsWrapper(env)
 
 window = Window('gym_minigrid - ' + args.env + ' - Map set ' + str(args.map_set_number))
 window.reg_key_handler(key_handler)
-
+window.reg_click_event(onclick)
 reset()
 
 # Blocking event loop

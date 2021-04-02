@@ -1,0 +1,36 @@
+time,Agent,Message
+2020-09-16 12:58:30.678985,Human,go to the next door
+2020-09-16 12:58:31.152004,Robot,"I am going for door, but should I go to switch"
+2020-09-16 12:58:33.736443,Robot,Done! I reached the door
+2020-09-16 12:58:43.380087,Human,"yes, go to the switch"
+2020-09-16 12:58:43.763694,Robot,I am going for the nearest switch
+2020-09-16 12:58:45.617005,Robot,Done! I reached the switch
+2020-09-16 12:58:53.184930,Human,can you see any victims there?
+2020-09-16 12:58:53.905563,Robot,I am going for victim towards the unexplored areas.
+2020-09-16 12:58:54.254887,Robot,I am going for it.
+2020-09-16 12:58:58.333783,Robot,Done! I reached the victim
+2020-09-16 12:59:17.211205,Human,check for more victims
+2020-09-16 12:59:17.567297,Robot,Done! I reached the victim
+2020-09-16 12:59:28.799165,Human,exit from the door
+2020-09-16 12:59:29.217451,Robot,I am going for the nearest door
+2020-09-16 12:59:30.062173,Robot,Done! I reached the door
+2020-09-16 13:00:24.658267,Human,explore and scout for any casualities
+2020-09-16 13:00:26.548866,Robot,I am going for frontier towards the unexplored areas.
+2020-09-16 13:00:50.125617,Robot,"Do you want me to go there at ((34.0, 21.0))"
+2020-09-16 13:00:53.567369,Human,(pressed enter)
+2020-09-16 13:00:53.570821,Robot,I received interrupt signal. Tell me what to go for?
+2020-09-16 13:00:59.818136,Human,go to the door
+2020-09-16 13:01:00.402778,Robot,I am going for the nearest door
+2020-09-16 13:01:01.480551,Robot,Done! I reached the door
+2020-09-16 13:01:10.068456,Human,save the victim
+2020-09-16 13:01:10.454819,Robot,I am going for the nearest victim
+2020-09-16 13:01:20.624956,Human,(pressed enter)
+2020-09-16 13:01:20.638772,Robot,I received interrupt signal. Tell me what to go for?
+2020-09-16 13:01:26.833756,Human,explore
+2020-09-16 13:01:27.955447,Robot,I am going for frontier towards the unexplored areas.
+2020-09-16 13:01:49.403077,Robot,"Do you want me to go there at ((43.0, 10.0))"
+2020-09-16 13:01:56.122984,Human,(pressed enter)
+2020-09-16 13:01:56.126728,Robot,I received interrupt signal. Tell me what to go for?
+2020-09-16 13:02:05.956822,Human,save the victim
+2020-09-16 13:02:06.398500,Robot,I am going for the nearest victim
+2020-09-16 13:02:10.242084,Robot,Done! I reached the victim

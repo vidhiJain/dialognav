@@ -1,3 +1,4 @@
+instruction,target
 Go to the next door,door
 Can you find the next door,door
 Let us check inside the next room,door
@@ -7,6 +8,14 @@ Can you locate any door nearby?,door
 Search for next victim,goal
 Go search for other injured ones,goal
 Locate other affected,goal
+check if the person is okay,goal
+is the person injured?,goal
 Look out for a light switch,key
 Go to the nearest lever,key
 Turn off the electricity,key
+Check if there is anything burning,lava
+Find an extinguisher,lava
+Put off the flames,lava
+Inspect the area,unseen
+Scan this place carefully,unseen
+Figure out where everything is,unseen

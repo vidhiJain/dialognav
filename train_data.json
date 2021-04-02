@@ -28,5 +28,15 @@
         "Find a light switch",
         "Locate a lever nearby",
         "Turn on the switch"
+    ],
+    "lava": [
+        "Check if there are any fires",
+        "Find if any fires",
+        "Search for fires if any"
+    ],
+    "unseen":[
+        "Search the area",
+        "Explore this place",
+        "Scan this"
     ]
 }

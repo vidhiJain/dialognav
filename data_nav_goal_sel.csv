@@ -1,0 +1,118 @@
+message	objectType	color	notRequiresHistory	spatialRelation
+Find last door	0	0	0	0
+Find previous door	0	0	0	0
+Find the already seen door	0	0	0	0
+Go to the door that you had just found	0	0	0	0
+Find the door	0	0	0	0
+Reach the other door	0	0	0	0
+Now find the next door	0	0	1	0
+Find a new door	0	0	1	0
+Find a door	0	0	1	0
+Find another door	0	0	1	0
+Find door on your left	0	0	1	1
+Find a door on the left side	0	0	1	1
+Find the right door	0	0	1	2
+Find a door on the right side	0	0	1	2
+Find the front door	0	0	1	3
+Find if there is any door in front of you	0	0	1	3
+Find a back door	0	0	1	4
+Go to last door	0	0	0	0
+Go to previous door	0	0	0	0
+Go to the already seen door	0	0	0	0
+Go to the other door you found	0	0	0	0
+Go to the door	0	0	1	0
+Go to the other door	0	0	1	0
+Go to the next door	0	0	1	0
+Go to new door	0	0	1	0
+Go to a door	0	0	1	0
+Go to another door	0	0	1	0
+Go to the left door	0	0	1	1
+Go to door on the left side	0	0	1	1
+Go to right door	0	0	1	2
+Go to door on right side	0	0	1	2
+Go to the door in front of you	0	0	1	3
+Go to the back door	0	0	1	4
+Check in the previous room	0	0	0	0
+Check in the next room	0	0	1	0
+Look for doors	0	0	1	0
+Reach adajecent room	0	0	1	0
+Move to last room	0	0	0	0
+Move to previous room	0	0	0	0
+Move to the already seen room	0	0	0	0
+Move to found room	0	0	0	0
+Move to the room	0	0	0	0
+Move to the other room	0	0	0	0
+Move to next room	0	0	1	0
+Move to new room	0	0	1	0
+Move to a room	0	0	1	0
+Move to another room	0	0	1	0
+Check in other room now	0	0	1	0
+Can you navigate to any room?	0	0	1	0
+Can you navigate to any room nearby?	0	0	1	0
+Keep an eye for other doors	0	0	1	0
+Can you find a way into the room?	0	0	0	0
+Can you navigate to any door nearby?	0	0	1	0
+Check for other victims in the room	0	0	0	0
+Can you find the next door?	0	0	1	0
+Can you find the way to the previous door?	0	0	0	0
+Can you find the way to the last door you entered?	0	0	0	0
+Can you find the way to a new room now?	0	0	1	0
+Can you find the way to another door?	0	0	1	0
+Can you find the way to the other door?	0	0	1	0
+Can you find the way to the last door you saw?	0	0	0	0
+Can you figure out status of another room nearby?	0	0	1	0
+Check in last room	0	0	0	0
+Check in previous room	0	0	0	0
+Check in the already seen room	0	0	0	0
+Check in found room	0	0	0	0
+Check in the room	0	0	0	0
+Check in the other room	0	0	0	0
+Check in next room	0	0	1	0
+Check in new room	0	0	1	0
+Check in a room	0	0	1	0
+Check in another room	0	0	1	0
+Look for doors	0	0	1	0
+Reach adajecent room	0	0	1	0
+Check in other room now	0	0	1	0
+Can you navigate to any room?	0	0	1	0
+Can you navigate to any room nearby?	0	0	1	0
+Keep an eye for other doors	0	0	1	0
+Can you figure a way into the room?	0	0	1	0
+Can you navigate to any door nearby?	0	0	1	0
+Can you locate any door nearby?	0	0	1	0
+Search for yellow victim	1	1	1	0
+Search for green victim	1	2	1	0
+See if you can save yellow victim	1	1	1	0
+See if you can save green victim	1	2	1	0
+Go search for other victims and triage them	1	0	1	0
+Locate yellow victims now	1	1	1	0
+Locate green victims now	1	2	1	0
+Check for other casualities	1	0	1	0
+Can you save the injured ones quickly?	1	0	1	0
+Look for injured and save them	1	0	1	0
+Look for any injured victims	1	0	1	0
+Can you navigate to any people?	1	0	1	0
+Can you navigate to anyone?	1	0	1	0
+Keep an eye for other casualities	1	0	1	0
+Can you figure a way to save victims?	1	0	1	0
+Can you navigate to any person nearby?	1	0	1	0
+Search and rescue any victims found	1	0	1	0
+Go to the last victim	1	0	0	0
+Go to the previous victim	1	0	0	0
+Go to the already seen victim	1	0	0	0
+Go to the other victim	1	0	0	0
+Go to the next victim	1	0	1	0
+Go to a new victim now	1	0	1	0
+Go to another victim	1	0	1	0
+Go search for other injured ones	1	0	1	0
+Save the last victim you saw	1	0	0	0
+Save the previous victim you encountered	1	0	0	0
+Save the already spotted victims first	1	0	0	0
+Save the other victim	1	0	0	0
+Save the next victim	1	0	1	0
+Save a new victim	1	0	1	0
+Save another victim now	1	0	1	0
+Locate other affected persons	1	0	1	0
+Check if the person is okay	1	0	1	0
+Are there any person injured here? save them first	1	0	1	0
+Can you figure a way to save more victims?	1	0	1	0
